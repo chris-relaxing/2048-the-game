@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>2048 - The Game</title>
+  <script>
+  let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+
+  function addRandom(){
+    let opensquares = [];
+    for(i = 0; i < 4; i++){
+      for(j = 0; j < 4; j++){
+        if(gameboard[i][j] === 0){
+          opensquares.push({
+            x: i,
+            y: j
+          })
+        }
+      }
+    }
+    console.log(opensquares);
+    if(opensquares.length > 0){
+      // Get a randomSquare from the grid
+      let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
+      console.log(randomSquare);
+      let randNum = Math.random(1);
+      console.log(randNum);
+      gameboard[randomSquare.x][randomSquare.y] = randNum > 0.5 ? 2 : 4;
+    }
+  }
+  addRandom();
+  addRandom();
+  console.table(gameboard);
+
+  </script>
+</head>
+<body>
+<h1>2048 - The Game</hi>
+</body>
