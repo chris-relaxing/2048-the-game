@@ -20,9 +20,10 @@
     }
     console.log(opensquares);
     if(opensquares.length > 0){
-      // Get a randomSquare from the grid
+      // Get a randomSquare from the opensquares dictionary
       let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
       console.log(randomSquare);
+      // get a random number less than 1
       let randNum = Math.random(1);
       console.log(randNum);
       gameboard[randomSquare.x][randomSquare.y] = randNum > 0.5 ? 2 : 4;
@@ -33,7 +34,75 @@
   console.table(gameboard);
 
   </script>
+  <style>
+
+
+  html, body {
+
+    padding: 0;
+    background: #faf8ef;
+    color: #776e65;
+    font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 20px;
+  }
+  h1 {
+    margin-left: 100px;
+    font-size: 48px;
+  }
+
+  .container {
+    margin-left: 100px;
+    background: #aaa;
+    display: inline-block;
+    border: 15px solid #aaa;
+    border-radius: 5px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 110px);
+    grid-template-rows: repeat(4, 110px);
+    grid-gap: 15px;
+  }
+
+  .cell {
+     /* center the cell content */
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-family: Arial;
+    font-size: 3rem;
+    font-weight: bold;
+    background: #ccc;
+    border-radius: 5px;
+  }
+  </style>
 </head>
 <body>
-<h1>2048 - The Game</hi>
+<h1>2048 - The Game</h1>
+
+  <div class="container">
+    <div class="grid">
+      <div class="cell" id="1"></div>
+      <div class="cell" id="2"></div>
+      <div class="cell" id="3">2</div>
+      <div class="cell" id="4"></div>
+
+      <div class="cell" id="5"></div>
+      <div class="cell" id="6"></div>
+      <div class="cell" id="7"></div>
+      <div class="cell" id="8"></div>
+
+      <div class="cell" id="9"></div>
+      <div class="cell" id="10"></div>
+      <div class="cell" id="11"></div>
+      <div class="cell" id="12">2</div>
+
+      <div class="cell" id="13"></div>
+      <div class="cell" id="14"></div>
+      <div class="cell" id="15"></div>
+      <div class="cell" id="16"></div>
+    </div>
+  </div>
+
 </body>
