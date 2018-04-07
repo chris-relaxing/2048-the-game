@@ -2,9 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
+  <script src="jquery-3.3.1.min.js"></script>
   <title>2048 - The Game</title>
   <script>
-  let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+  let gameboard = [[0,2,2,0], [2,0,8,0], [0,2,0,4], [0,0,4,4]]
 
   function addRandom(){
     let opensquares = [];
@@ -18,20 +20,72 @@
         }
       }
     }
-    console.log(opensquares);
+    console.log("opensquares", opensquares);
     if(opensquares.length > 0){
       // Get a randomSquare from the opensquares dictionary
       let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
-      console.log(randomSquare);
+      console.log("randomSquare", randomSquare);
       // get a random number less than 1
       let randNum = Math.random(1);
-      console.log(randNum);
-      gameboard[randomSquare.x][randomSquare.y] = randNum > 0.5 ? 2 : 4;
+      console.log("randNum",randNum);
+      let newNum = randNum > 0.5 ? 2 : 4;
+      gameboard[randomSquare.x][randomSquare.y] = newNum;
+
+      // Populate the cell
+      let x = randomSquare.x;
+      let y = randomSquare.y;
+      let targetCell = x.toString() + y.toString();
+      console.table("targetCell", targetCell);
+      $(document).ready(function(){
+        $('#'+targetCell).text(newNum);
+      });
+
     }
   }
   addRandom();
-  addRandom();
+  console.log("gameboard", gameboard);
+  function updateGameboard(){
+
+    $(document).ready(function(){
+      gameboard[0][0] === 0 ? "" : $('#00').text(gameboard[0][0]);
+      gameboard[0][1] === 0 ? "" : $('#01').text(gameboard[0][1]);
+      gameboard[0][2] === 0 ? "" : $('#02').text(gameboard[0][2]); //$(.cell).css('background-color': '#f6f6ee');
+      gameboard[0][3] === 0 ? "" : $('#03').text(gameboard[0][3]);
+      gameboard[1][0] === 0 ? "" : $('#10').text(gameboard[1][0]);
+      gameboard[1][1] === 0 ? "" : $('#11').text(gameboard[1][1]);
+      gameboard[1][2] === 0 ? "" : $('#12').text(gameboard[1][2]);
+      gameboard[1][3] === 0 ? "" : $('#13').text(gameboard[1][3]);
+      gameboard[2][0] === 0 ? "" : $('#20').text(gameboard[2][0]);
+      gameboard[2][1] === 0 ? "" : $('#21').text(gameboard[2][1]);
+      gameboard[2][2] === 0 ? "" : $('#22').text(gameboard[2][2]);
+      gameboard[2][3] === 0 ? "" : $('#23').text(gameboard[2][3]);
+      gameboard[3][0] === 0 ? "" : $('#30').text(gameboard[3][0]);
+      gameboard[3][1] === 0 ? "" : $('#31').text(gameboard[3][1]);
+      gameboard[3][2] === 0 ? "" : $('#32').text(gameboard[3][2]);
+      gameboard[3][3] === 0 ? "" : $('#33').text(gameboard[3][3]);
+    });
+  };
+  updateGameboard();
+  // addRandom();
+  // console.log("gameboard", gameboard);
+  // let targetCell = "00";
+  // $(document).ready(function(){
+  //   $('#'+targetCell).text("2");
+  // });
+
   console.table(gameboard);
+
+  // Confirm jQuery is working
+
+  // window.onload = function() {
+  //   if (window.jQuery) {
+  //       // jQuery is loaded
+  //       alert("jQuery is working!");
+  //   } else {
+  //       // jQuery is not loaded
+  //       alert("Hmm, jQuery not working.");
+  //   }
+  // }
 
   </script>
   <style>
@@ -76,6 +130,9 @@
     background: #ccc;
     border-radius: 5px;
   }
+  .two {
+    background-color: #f6f6ee;
+  }
   </style>
 </head>
 <body>
@@ -83,25 +140,25 @@
 
   <div class="container">
     <div class="grid">
-      <div class="cell" id="1"></div>
-      <div class="cell" id="2"></div>
-      <div class="cell" id="3">2</div>
-      <div class="cell" id="4"></div>
+      <div class="cell" id="00"></div>
+      <div class="cell" id="01"></div>
+      <div class="cell" id="02"></div>
+      <div class="cell" id="03"></div>
 
-      <div class="cell" id="5"></div>
-      <div class="cell" id="6"></div>
-      <div class="cell" id="7"></div>
-      <div class="cell" id="8"></div>
-
-      <div class="cell" id="9"></div>
       <div class="cell" id="10"></div>
       <div class="cell" id="11"></div>
-      <div class="cell" id="12">2</div>
-
+      <div class="cell" id="12"></div>
       <div class="cell" id="13"></div>
-      <div class="cell" id="14"></div>
-      <div class="cell" id="15"></div>
-      <div class="cell" id="16"></div>
+
+      <div class="cell" id="20"></div>
+      <div class="cell" id="21"></div>
+      <div class="cell" id="22"></div>
+      <div class="cell" id="23"></div>
+
+      <div class="cell" id="30"></div>
+      <div class="cell" id="31"></div>
+      <div class="cell" id="32"></div>
+      <div class="cell" id="33"></div>
     </div>
   </div>
 
