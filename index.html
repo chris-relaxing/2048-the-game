@@ -6,7 +6,48 @@
   <script src="jquery-3.3.1.min.js"></script>
   <title>2048 - The Game</title>
   <script>
-  let gameboard = [[0,2,2,0], [2,0,8,0], [0,2,0,4], [0,0,4,4]]
+
+  let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+  // Set up game loop
+  // var framesPerSecond = 30;
+  var framesPerSecond = 1;
+  setInterval(
+      function() {
+          // Game logic goes here
+          gameboard = [[0,2,2,0], [2,0,8,0], [0,2,0,4], [0,0,4,4]]
+
+          addRandom();
+          // console.log("gameboard", gameboard);
+          updateGameboard();
+
+          // console.table(gameboard);
+
+
+          // drawComponents();
+      }, 1000/framesPerSecond);
+
+
+
+  document.onkeydown = function (e) {
+    switch (e.key) {
+        case 'ArrowUp':
+            // up arrow
+            console.table("Up arrow");
+            break;
+        case 'ArrowDown':
+            // down arrow
+            console.table("Down arrow");
+            break;
+        case 'ArrowLeft':
+            // left arrow
+            console.table("Left arrow");
+            break;
+        case 'ArrowRight':
+            // right arrow
+            console.table("Right arrow");
+    }
+};
+
 
   function addRandom(){
     let opensquares = [];
@@ -20,14 +61,14 @@
         }
       }
     }
-    console.log("opensquares", opensquares);
+    // console.log("opensquares", opensquares);
     if(opensquares.length > 0){
       // Get a randomSquare from the opensquares dictionary
       let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
-      console.log("randomSquare", randomSquare);
+      // console.log("randomSquare", randomSquare);
       // get a random number less than 1
       let randNum = Math.random(1);
-      console.log("randNum",randNum);
+      // console.log("randNum",randNum);
       let newNum = randNum > 0.5 ? 2 : 4;
       gameboard[randomSquare.x][randomSquare.y] = newNum;
 
@@ -35,15 +76,14 @@
       let x = randomSquare.x;
       let y = randomSquare.y;
       let targetCell = x.toString() + y.toString();
-      console.table("targetCell", targetCell);
+      // console.table("targetCell", targetCell);
       $(document).ready(function(){
         $('#'+targetCell).text(newNum);
       });
 
     }
   }
-  addRandom();
-  console.log("gameboard", gameboard);
+
   function updateGameboard(){
 
     $(document).ready(function(){
@@ -65,7 +105,7 @@
       gameboard[3][3] === 0 ? "" : $('#33').text(gameboard[3][3]);
     });
   };
-  updateGameboard();
+
   // addRandom();
   // console.log("gameboard", gameboard);
   // let targetCell = "00";
@@ -73,7 +113,7 @@
   //   $('#'+targetCell).text("2");
   // });
 
-  console.table(gameboard);
+
 
   // Confirm jQuery is working
 
