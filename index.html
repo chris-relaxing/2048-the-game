@@ -8,24 +8,19 @@
   <script>
 
   let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+
+  // Add first two numbers to the board
+  addRandom();
+  addRandom();
+
   // Set up game loop
   // var framesPerSecond = 30;
   var framesPerSecond = 1;
   setInterval(
       function() {
-          // Game logic goes here
-          gameboard = [[0,2,2,0], [2,0,8,0], [0,2,0,4], [0,0,4,4]]
-
-          addRandom();
-          // console.log("gameboard", gameboard);
-          updateGameboard();
-
-          // console.table(gameboard);
-
-
-          // drawComponents();
+          // Keep track of the game board inside the game loop
+          // keepTrackofGameboard();
       }, 1000/framesPerSecond);
-
 
 
   document.onkeydown = function (e) {
@@ -33,20 +28,65 @@
         case 'ArrowUp':
             // up arrow
             console.table("Up arrow");
+            upArrow();
+            addRandom();
             break;
         case 'ArrowDown':
             // down arrow
             console.table("Down arrow");
+            addRandom();
             break;
         case 'ArrowLeft':
             // left arrow
             console.table("Left arrow");
+            addRandom();
             break;
         case 'ArrowRight':
             // right arrow
             console.table("Right arrow");
+            addRandom();
     }
 };
+
+  function upArrow(){
+    bottomRow = gameboard[3];
+    thirdRow  = gameboard[2];
+    secondRow = gameboard[1];
+    topRow    = gameboard[0];
+    console.log("   top row", topRow.toString());
+    console.log("second row", secondRow.toString());
+    console.log(" third row", thirdRow.toString());
+    console.log("bottom row", bottomRow.toString());
+    let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+    // c1[0] is gameboard[0][0]
+    if ( gameboard[0][0] === 0 ){
+      if ( gameboard[1][0] != 0 ){
+        gameboard[0][0] = gameboard[1][0];
+        gameboard[1][0] = 0;
+      }
+    }
+
+    // if ( c1[0] === 0 ){
+    //   if ( c1[1] != 0 ){
+    //     c1[0] = c1[1];
+    //     c1[1] = 0;
+    //   }
+    // }
+
+    // For each column of each small array
+    // for(i = 0; i < 4; i++){
+    //
+    // }
+
+    // for(i = 0; i < 4; i++){
+    //   for(j = 0; j < 4; j++){
+    //     console.log(gameboard[j][i]);
+    //     // if(gameboard[i][j] === 0){
+    //     //
+    //     // }
+    //   }
+    // }
+  }
 
 
   function addRandom(){
@@ -61,7 +101,7 @@
         }
       }
     }
-    // console.log("opensquares", opensquares);
+
     if(opensquares.length > 0){
       // Get a randomSquare from the opensquares dictionary
       let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
@@ -72,19 +112,29 @@
       let newNum = randNum > 0.5 ? 2 : 4;
       gameboard[randomSquare.x][randomSquare.y] = newNum;
 
+
+
+      // This section updates the board view ---------
+
       // Populate the cell
       let x = randomSquare.x;
       let y = randomSquare.y;
       let targetCell = x.toString() + y.toString();
       // console.table("targetCell", targetCell);
+
+      // This is what makes the number visible on the grid
       $(document).ready(function(){
         $('#'+targetCell).text(newNum);
       });
+      // ---------------------------------------------
 
     }
+    console.log("gameboard", gameboard.toString());
+    console.log("How many open squares?", opensquares.length-1)
+    // console.table(gameboard);
   }
 
-  function updateGameboard(){
+  function keepTrackofGameboard(){ // This function not doing anything?
 
     $(document).ready(function(){
       gameboard[0][0] === 0 ? "" : $('#00').text(gameboard[0][0]);
@@ -104,6 +154,11 @@
       gameboard[3][2] === 0 ? "" : $('#32').text(gameboard[3][2]);
       gameboard[3][3] === 0 ? "" : $('#33').text(gameboard[3][3]);
     });
+
+    // $(.cell).css('background-color': '#f6f6ee');
+    // $('.cell').each(function(){
+    //   if($(this).text() === 2)$(this).css('background-color','white');
+    // });
   };
 
   // addRandom();
