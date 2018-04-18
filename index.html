@@ -57,7 +57,7 @@
     console.log("second row", secondRow.toString());
     console.log(" third row", thirdRow.toString());
     console.log("bottom row", bottomRow.toString());
-    let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+
     // c1[0] is gameboard[0][0]
     if ( gameboard[0][0] === 0 ){
       if ( gameboard[1][0] != 0 ){
@@ -72,6 +72,26 @@
     //     c1[1] = 0;
     //   }
     // }
+
+    // Step 1 - Load the column into an array
+    // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+    let c1 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+    console.log('c1 ', c1.toString());
+
+    // Step 2 - count the number of occupied cells
+    function returnCount(arrayToCheck, element){
+    	let array = arrayToCheck;
+    	let elementToFind = element;
+      let numberFound = array.filter(x => x === elementToFind).length;
+      return numberFound;
+    }
+
+    numberOccupiedCells = 4 - returnCount(c1, 0);
+    console.log('numberOccupiedCells', numberOccupiedCells);
+
+    // Step 3 - switch case for number of occupied cells
+
+    
 
     // For each column of each small array
     // for(i = 0; i < 4; i++){
