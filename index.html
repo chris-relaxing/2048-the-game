@@ -7,21 +7,29 @@
   <title>2048 - The Game</title>
   <script>
 
-  let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+  var gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+  let action = 0;
 
   // Add first two numbers to the board
   addRandom();
   addRandom();
-  analyzeGameBoard();
+  // analyzeGameBoard();
+  // if (action){
+  //   addRandom();
+  // }
 
   // Set up game loop
   // var framesPerSecond = 30;
-  var framesPerSecond = 1;
-  setInterval(
-      function() {
-          // Keep track of the game board inside the game loop
-          // keepTrackofGameboard();
-      }, 1000/framesPerSecond);
+  // var framesPerSecond = 1;
+  // setInterval(
+  //     function() {
+  //         // Keep track of the game board inside the game loop
+  //         // keepTrackofGameboard();
+  //         if (action){
+  //           displayGameboard();
+  //           addRandom();
+  //         }
+  //     }, 1000/framesPerSecond);
 
 
   document.onkeydown = function (e) {
@@ -29,7 +37,10 @@
         case 'ArrowUp':
             // up arrow
             console.table("Up arrow");
+
             upArrow();
+            displayGameboard();
+            addRandom();
 
             break;
         case 'ArrowDown':
@@ -46,61 +57,133 @@
             // right arrow
             console.table("Right arrow");
             addRandom();
+            break;
     }
 };
+
+function upArrow(){
+  bottomRow = gameboard[3];
+  thirdRow  = gameboard[2];
+  secondRow = gameboard[1];
+  topRow    = gameboard[0];
+  console.log("   top row", topRow.toString());
+  console.log("second row", secondRow.toString());
+  console.log(" third row", thirdRow.toString());
+  console.log("bottom row", bottomRow.toString());
+
+  analyzeGameBoard();
+
+}
+
+
+function sortColumn(column){
+  let c1 = column;
+  let nc = [0,0,0,0]; // new column
+  for(i = 0; i < 3; i++){
+    c = c1[i];
+    n = c1[i+1]
+    if ( c === n ){ // match, so add
+      nc[i] = c+n;
+      nc[i+1] = 0;
+      // c1[i+1] = 0;//
+      console.log("-case1-", c, n, i, nc.toString());
+
+    }
+    else if ( c === 0 ){ // c is empty, so move n to it
+      nc[i] = n;
+      nc[i+1] = 0;
+      c1[i+1] = 0;
+      // c = c1[i];
+      // n = c1[i+1];
+      console.log("-case2-", c, n, i, nc.toString());
+        if(nc[i-1] === 0){  // move up 1 more place in the column
+
+          // c = c1[i];
+          // n = c1[i+1];
+          nc[i-1] = n;
+          nc[i] = 0;
+          // c1[i] = 0;//
+          console.log("-case2.1", c, n, i, nc.toString());
+        }
+        if(nc[i-2] === 0){ // move up 1 more place in the column again
+
+          nc[i-2] = n;
+          nc[i-1] = 0;
+          // c1[i-1] = 0;//
+          console.log("-case2.2", c, n, i, nc.toString());
+        }
+    }
+    else {   // do nothing
+      nc[i] = c;
+      nc[i+1] = n;
+      console.log("-case3-", c, n, i, nc.toString());
+    }
+  }
+    console.log("The changed column is: ", nc);
+    console.log(nc[0], nc[1], nc[2], nc[3]);
+
+    // Update gameboard with new column
+    gameboard[0][0] = nc[0];
+    gameboard[1][0] = nc[1];
+    gameboard[2][0] = nc[2];
+    gameboard[3][0] = nc[3];
+    console.log("-~gameboard", gameboard.toString());
+    // displayGameboard();
+
+    return nc;
+}
+
 
   function analyzeGameBoard(){
     // Step 1 - Load the column into an array
     // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
     let c1 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
     console.log('c1 ', c1.toString());
+    // let nc = [];
+    // for (let o = 0; o < c1.length; o++){
+    //   nc.push(c1[o]);
+    // }
 
 
-    nc = []; // new column
-    for(i = 0; i < 3; i++){
-      c = c1[i];
-      n = c1[i+1]
-      if ( c === n ){ // match, so add
-        nc[i] = c+n;
-        nc[i+1] = 0;
-        console.log("-case1-", c, n, i);
-        // break;
-      }
-      else if ( c === 0 ){ // c is empty, so move n to it
-        nc[i] = n;
-        nc[i+1] = 0;
-        c1[i+1] = 0;
-        console.log("-case2-", c, n, i);
-        // break;
-      }
-      else {
-        nc[i] = c;
-        nc[i+1] = n;
-        console.log("-case3-", c, n, i);
-      }
+    let nc = sortColumn(c1);
+    console.log('nc ', nc.toString());
+    if (nc === c1) {
+      console.log("No action.");
+    } else {
+      console.log("ACTION!");
+      action = 1;
     }
-    console.log("The changed column is: ", nc);
+    displayGameboard()
+
+    // if(nc != c1) { // a move has been made
+    //
+    // }
+    // Update gameboard with new column
+    // gameboard[0][0] = nc[0];
+    // gameboard[1][0] = nc[1];
+    // gameboard[2][0] = nc[2];
+    // gameboard[3][0] = nc[3];
+
+    // AFter the first pass over c1, I need another sweep over nc in order to
+    // make matches. For example, the case where c1 started out as 0,4,4,0
+    // After running through c1, nc was set to 4,4,0,0
+    // nc = sortColumn(nc);
+
+
+  }
+
+  function returnCount(arrayToCheck, element){
+    let array = arrayToCheck;
+    let elementToFind = element;
+    let numberFound = array.filter(x => x === elementToFind).length;
+    return numberFound;
   }
 
 
-  function upArrow(){
-    bottomRow = gameboard[3];
-    thirdRow  = gameboard[2];
-    secondRow = gameboard[1];
-    topRow    = gameboard[0];
-    console.log("   top row", topRow.toString());
-    console.log("second row", secondRow.toString());
-    console.log(" third row", thirdRow.toString());
-    console.log("bottom row", bottomRow.toString());
 
 
     // Step 2 - count the number of occupied cells
-    function returnCount(arrayToCheck, element){
-    	let array = arrayToCheck;
-    	let elementToFind = element;
-      let numberFound = array.filter(x => x === elementToFind).length;
-      return numberFound;
-    }
+
 
     // numberOccupiedCells = 4 - returnCount(c1, 0);
     // console.log('numberOccupiedCells', numberOccupiedCells);
@@ -134,8 +217,8 @@
     // }
 
     // if movement
-    addRandom();
-    analyzeGameBoard();
+    // addRandom();
+
 
 
 
@@ -148,10 +231,11 @@
     //     // }
     //   }
     // }
-  }
+
 
 
   function addRandom(){
+    console.log("\ngameboard", gameboard.toString());
     let opensquares = [];
     for(i = 0; i < 4; i++){
       for(j = 0; j < 4; j++){
@@ -163,6 +247,11 @@
         }
       }
     }
+    console.log("opensquares contains:", opensquares.length);
+    for(let b = 0; b < opensquares.length; b++){
+      console.log(opensquares[b]);
+    }
+    // console.log("opensquares", opensquares.toString());
 
     if(opensquares.length > 0){
       // Get a randomSquare from the opensquares dictionary
@@ -173,6 +262,8 @@
       // console.log("randNum",randNum);
       let newNum = randNum > 0.5 ? 2 : 4;
       gameboard[randomSquare.x][randomSquare.y] = newNum;
+      randomInsert = "gameboard[" + randomSquare.x + "][" + randomSquare.y + "]";
+      console.log("Random insert: ", randomInsert)
 
 
 
@@ -182,39 +273,42 @@
       let x = randomSquare.x;
       let y = randomSquare.y;
       let targetCell = x.toString() + y.toString();
-      // console.table("targetCell", targetCell);
+      // console.table("random: gameboard[" + randomSquare.x + "][" + randomSquare.y + "]");
 
       // This is what makes the number visible on the grid
-      $(document).ready(function(){
-        $('#'+targetCell).text(newNum);
-      });
+      // $(document).ready(function(){
+      //   $('#'+targetCell).text(newNum);
+      // });
+      displayGameboard()
       // ---------------------------------------------
 
     }
     console.log("gameboard", gameboard.toString());
     console.log("How many open squares?", opensquares.length-1)
+    action = 0;
     // console.table(gameboard);
   }
 
-  function keepTrackofGameboard(){ // This function not doing anything?
-
+  function displayGameboard(){ // This function not doing anything?
+    // console.log("*gameboard*", gameboard.toString());
     $(document).ready(function(){
-      gameboard[0][0] === 0 ? "" : $('#00').text(gameboard[0][0]);
-      gameboard[0][1] === 0 ? "" : $('#01').text(gameboard[0][1]);
-      gameboard[0][2] === 0 ? "" : $('#02').text(gameboard[0][2]); //$(.cell).css('background-color': '#f6f6ee');
-      gameboard[0][3] === 0 ? "" : $('#03').text(gameboard[0][3]);
-      gameboard[1][0] === 0 ? "" : $('#10').text(gameboard[1][0]);
-      gameboard[1][1] === 0 ? "" : $('#11').text(gameboard[1][1]);
-      gameboard[1][2] === 0 ? "" : $('#12').text(gameboard[1][2]);
-      gameboard[1][3] === 0 ? "" : $('#13').text(gameboard[1][3]);
-      gameboard[2][0] === 0 ? "" : $('#20').text(gameboard[2][0]);
-      gameboard[2][1] === 0 ? "" : $('#21').text(gameboard[2][1]);
-      gameboard[2][2] === 0 ? "" : $('#22').text(gameboard[2][2]);
-      gameboard[2][3] === 0 ? "" : $('#23').text(gameboard[2][3]);
-      gameboard[3][0] === 0 ? "" : $('#30').text(gameboard[3][0]);
-      gameboard[3][1] === 0 ? "" : $('#31').text(gameboard[3][1]);
-      gameboard[3][2] === 0 ? "" : $('#32').text(gameboard[3][2]);
-      gameboard[3][3] === 0 ? "" : $('#33').text(gameboard[3][3]);
+      (gameboard[0][0] === 0) ? $('#00').text('') : $('#00').text(gameboard[0][0]);
+      (gameboard[0][1] === 0) ? $('#01').text('') : $('#01').text(gameboard[0][1]);
+      (gameboard[0][2] === 0) ? $('#02').text('') : $('#02').text(gameboard[0][2]); //$(.cell).css('background-color': '#f6f6ee');
+      (gameboard[0][3] === 0) ? $('#03').text('') : $('#03').text(gameboard[0][3]);
+      (gameboard[1][0] === 0) ? $('#10').text('') : $('#10').text(gameboard[1][0]);
+      (gameboard[1][1] === 0) ? $('#11').text('') : $('#11').text(gameboard[1][1]);
+      (gameboard[1][2] === 0) ? $('#12').text('') : $('#12').text(gameboard[1][2]);
+      (gameboard[1][3] === 0) ? $('#13').text('') : $('#13').text(gameboard[1][3]);
+      (gameboard[2][0] === 0) ? $('#20').text('') : $('#20').text(gameboard[2][0]);
+      (gameboard[2][1] === 0) ? $('#21').text('') : $('#21').text(gameboard[2][1]);
+      (gameboard[2][2] === 0) ? $('#22').text('') : $('#22').text(gameboard[2][2]);
+      (gameboard[2][3] === 0) ? $('#23').text('') : $('#23').text(gameboard[2][3]);
+      (gameboard[3][0] === 0) ? $('#30').text('') : $('#30').text(gameboard[3][0]);
+      (gameboard[3][1] === 0) ? $('#31').text('') : $('#31').text(gameboard[3][1]);
+      (gameboard[3][2] === 0) ? $('#32').text('') : $('#32').text(gameboard[3][2]);
+      (gameboard[3][3] === 0) ? $('#33').text('') : $('#33').text(gameboard[3][3]);
+
     });
 
     // $(.cell).css('background-color': '#f6f6ee');
