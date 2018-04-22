@@ -11,28 +11,9 @@
   let action = 1;
   let gameboardBefore = ""; // Make this global
 
-
   // Add first two numbers to the board
   addRandom();
   addRandom();
-  // analyzeGameBoard();
-  // if (action){
-  //   addRandom();
-  // }
-
-  // Set up game loop
-  // var framesPerSecond = 30;
-  // var framesPerSecond = 1;
-  // setInterval(
-  //     function() {
-  //         // Keep track of the game board inside the game loop
-  //         // keepTrackofGameboard();
-  //         if (action){
-  //           displayGameboard();
-  //           addRandom();
-  //         }
-  //     }, 1000/framesPerSecond);
-
 
   document.onkeydown = function (e) {
     switch (e.key) {
@@ -42,17 +23,22 @@
 
             upArrow();
             displayGameboard();
-
             if ( action ){
               addRandom();
             }
-
 
             break;
         case 'ArrowDown':
             // down arrow
             console.table("Down arrow");
-            addRandom();
+
+            downArrow();
+            displayGameboard();
+            if ( action ){
+              addRandom();
+            }
+
+
             break;
         case 'ArrowLeft':
             // left arrow
@@ -68,16 +54,46 @@
 };
 
 function upArrow(){
-  bottomRow = gameboard[3];
-  thirdRow  = gameboard[2];
-  secondRow = gameboard[1];
-  topRow    = gameboard[0];
-  console.log("   top row", topRow.toString());
-  console.log("second row", secondRow.toString());
-  console.log(" third row", thirdRow.toString());
-  console.log("bottom row", bottomRow.toString());
+  displayTextMatrix();
 
-  analyzeGameBoard();
+  // Step 1 - Load the column into an array
+  // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+  let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+  let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
+  let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
+  let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
+
+
+  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+  console.log("-gameboard BEFORE", gameboardBefore);
+
+  console.log('c0 ', c0.toString(), "--------------------");
+  let nc = sortColumnUp(c0,0);
+  console.log('c1 ', c1.toString(), "--------------------");
+  nc = sortColumnUp(c1,1);
+  console.log('c2 ', c2.toString(), "--------------------");
+  nc = sortColumnUp(c2,2);
+  console.log('c3 ', c3.toString(), "--------------------");
+  nc = sortColumnUp(c3,3);
+
+  console.log('nc ', nc.toString());
+
+  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  console.log("-gameboard AFTER", gameboardAfter);
+
+  if (gameboardBefore === gameboardAfter) {
+    console.log("-gameboard BEFORE", gameboardBefore);
+    console.log("-gameboard AFTER", gameboardAfter);
+    console.log("!! NO ACTION !!");
+    action = 0;
+  } else {
+    console.log("-gameboard BEFORE", gameboardBefore);
+    console.log("-gameboard AFTER",  gameboardAfter);
+    console.log("ACTION!");
+    action = 1;
+    // let sr = sortColumn(nc);
+  }
+  displayGameboard()
 
 }
 
@@ -150,47 +166,130 @@ function sortColumnUp(column,col){
     return nc;
 }
 
+function displayTextMatrix(){
+  bottomRow = gameboard[3];
+  thirdRow  = gameboard[2];
+  secondRow = gameboard[1];
+  topRow    = gameboard[0];
+  console.log("   top row", topRow.toString());
+  console.log("second row", secondRow.toString());
+  console.log(" third row", thirdRow.toString());
+  console.log("bottom row", bottomRow.toString());
+}
 
-  function analyzeGameBoard(){
-    // Step 1 - Load the column into an array
-    // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
-    let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
-    let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
-    let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
-    let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
 
-    gameboardBefore = gameboard.slice().toString(); // shallow copy of the array
+function downArrow(){
+  displayTextMatrix();
+
+  // Step 1 - Load the column into an array
+  // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+  let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+  let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
+  let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
+  let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
+
+
+  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+  console.log("-gameboard BEFORE", gameboardBefore);
+
+  console.log('c0 ', c0.toString(), "--------------------");
+  let nc = sortColumnDown(c0,0);
+  console.log('c1 ', c1.toString(), "--------------------");
+  nc = sortColumnDown(c1,1);
+  console.log('c2 ', c2.toString(), "--------------------");
+  nc = sortColumnDown(c2,2);
+  console.log('c3 ', c3.toString(), "--------------------");
+  nc = sortColumnDown(c3,3);
+
+  console.log('nc ', nc.toString());
+
+  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  console.log("-gameboard AFTER", gameboardAfter);
+
+  if (gameboardBefore === gameboardAfter) {
     console.log("-gameboard BEFORE", gameboardBefore);
-
-    console.log('c0 ', c0.toString(), "--------------------");
-    let nc = sortColumnUp(c0,0);
-    console.log('c1 ', c1.toString(), "--------------------");
-    nc = sortColumnUp(c1,1);
-    console.log('c2 ', c2.toString(), "--------------------");
-    nc = sortColumnUp(c2,2);
-    console.log('c3 ', c3.toString(), "--------------------");
-    nc = sortColumnUp(c3,3);
-
-    console.log('nc ', nc.toString());
-
-    let gameboardAfter = gameboard.slice().toString(); // shallow copy
     console.log("-gameboard AFTER", gameboardAfter);
-
-    if (gameboardBefore === gameboardAfter) {
-      console.log("-gameboard BEFORE", gameboardBefore);
-      console.log("-gameboard AFTER", gameboardAfter);
-      console.log("!! NO ACTION !!");
-      action = 0;
-    } else {
-      console.log("-gameboard BEFORE", gameboardBefore);
-      console.log("-gameboard AFTER",  gameboardAfter);
-      console.log("ACTION!");
-      action = 1;
-      // let sr = sortColumn(nc);
-    }
-    displayGameboard()
-
+    console.log("!! NO ACTION !!");
+    action = 0;
+  } else {
+    console.log("-gameboard BEFORE", gameboardBefore);
+    console.log("-gameboard AFTER",  gameboardAfter);
+    console.log("ACTION!");
+    action = 1;
+    // let sr = sortColumn(nc);
   }
+  displayGameboard()
+
+}
+
+
+function sortColumnDown(column,col){
+  // let currentColumn = "c" + col.toString();
+  let c1 = column;
+  let nc = [0,0,0,0]; // new column
+  for(i = 3; i >= 1; i--){
+    bottom = c1[i];
+    oneAbove = c1[i-1];
+    if ( c1[i] === c1[i-1] && c1[i] != 0){ // match, so add
+      nc[i] = c1[i]+c1[i-1];
+      nc[i-1] = 0;
+      c1[i-1] = 0;
+      console.log("-case1-", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i]", nc[i], "nc[i-1]", nc[i-1], "nc", nc.toString(), "c1", c1.toString(), "Match. Add. Replace cell with 0.");
+    }
+    else if ( c1[i] === 0 ){ // c is empty, so move n to it
+      nc[i] = c1[i-1];
+      nc[i-1] = 0;
+      c1[i-1] = 0;
+      console.log("-case2-", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i]", nc[i], "nc[i-1]", nc[i-1], "nc", nc.toString(), "c1", c1.toString(), "Move up one.");
+        if(nc[i+1] === 0){  // move up 1 more place in the column
+          nc[i+1] = nc[i];
+          nc[i] = 0;
+          console.log("-case2.1", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i+1]", nc[i+1], "nc[i-1]", nc[i-1], "nc", nc.toString(), "c1", c1.toString(), "Move up one.");
+          // After the number moved, check if there is a match
+          if ( nc[i+1] === nc[i+2] ){
+            nc[i+2] = nc[i+1]+nc[i+2];
+            nc[i+1] = 0;
+            console.log("-case2.1.3", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i-1]", nc[i-1], "nc[i-2]", nc[i-2], "nc", nc.toString(), "c1", c1.toString(), "Done moving. Match. Add.");
+          }
+        }
+        if(nc[i+2] === 0){ // move up 1 more place in the column again
+          nc[i+2] = nc[i+1];
+          nc[i+1] = 0;
+          console.log("-case2.2", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i-2]", nc[i-2], "nc[i-3]", nc[i-3], "nc", nc.toString(), "c1", c1.toString(), "Move up one.");
+          // After the number moved, check if there is a match
+          if ( nc[i+2] === nc[i+3] ){
+            nc[i+3] = nc[i+2]+nc[i+3];
+            nc[i+2] = 0;
+            console.log("-case2.2.3", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i-2]", nc[i-2], "nc[i-3]", nc[i-3], "nc", nc.toString(), "c1", c1.toString(), "Done moving. Match. Add.");
+          }
+        }
+        // After the number moved, check if there is a match
+        if ( nc[i] === nc[i+1] ){
+          nc[i+1] = nc[i]+nc[i+1];
+          nc[i] = 0;
+          console.log("-case2.3", "bottom", bottom, "oneAbove", oneAbove,  i, "nc[i]", nc[i], "nc[i-1]", nc[i-1], "nc", nc.toString(), "c1", c1.toString(), "Done moving. Match. Add.");
+        }
+
+    }
+    else {   // do nothing
+      nc[i] = c1[i];
+      nc[i-1] = c1[i-1];
+      console.log("-case3-", "bottom", bottom, "oneAbove", oneAbove, "i",  i, "nc[i]", nc[i], "nc[i-1]", nc[i-1], "nc", nc.toString(), "c1", c1.toString(), "Do nothing.");
+    }
+  }
+    console.log("The changed column is: ", nc);
+    console.log(nc[0], nc[1], nc[2], nc[3]);
+
+    // Update gameboard with new column
+    gameboard[0][col] = nc[0];
+    gameboard[1][col] = nc[1];
+    gameboard[2][col] = nc[2];
+    gameboard[3][col] = nc[3];
+    // console.log("-~gameboard", gameboard.toString());
+    // displayGameboard();
+
+    return nc;
+}
 
   function returnCount(arrayToCheck, element){
     let array = arrayToCheck;
