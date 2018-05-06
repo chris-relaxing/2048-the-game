@@ -177,6 +177,16 @@ function displayTextMatrix(){
   console.log("bottom row", bottomRow.toString());
 }
 
+function deepCopy(array) {
+  let arrayCopy = [[], [], [], []];
+  for (let o = 0; o < 4; o++) {
+    for (let i = 0; i < 4; i++) {
+      arrayCopy[o][i] = array[o][i];
+    }
+  }
+  return arrayCopy;
+}
+
 
 function downArrow(){
   displayTextMatrix();
@@ -188,12 +198,28 @@ function downArrow(){
   let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
   let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
 
-
+  let gameboardArrayBefore = deepCopy(gameboard);
   gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-  console.log("-gameboard BEFORE", gameboardBefore);
+  console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
+
+  let direction = 'd';
 
   console.log('c0 ', c0.toString(), "--------------------");
   let nc = sortColumnDown(c0,0);
+
+  // Figure out the four moves (one for each column)
+  // slideHorizontal(numSpaces, direction, textTransform, div)
+  // slideVertical(2, 'd', 2, 'i');slideVertical(3, 'd', 2, 'm');
+  // this column is a,e,i,m
+
+  // gameboard[0][col] = nc[0];
+  // gameboard[1][col] = nc[1];
+  // gameboard[2][col] = nc[2];
+  // gameboard[3][col] = nc[3];
+
+
+
   console.log('c1 ', c1.toString(), "--------------------");
   nc = sortColumnDown(c1,1);
   console.log('c2 ', c2.toString(), "--------------------");
@@ -203,8 +229,9 @@ function downArrow(){
 
   console.log('nc ', nc.toString());
 
+  let gameboardArrayAfter = deepCopy(gameboard);
   let gameboardAfter = gameboard.slice().toString(); // shallow copy
-  console.log("-gameboard AFTER", gameboardAfter);
+  console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
   if (gameboardBefore === gameboardAfter) {
     console.log("-gameboard BEFORE", gameboardBefore);
@@ -218,6 +245,7 @@ function downArrow(){
     action = 1;
     // let sr = sortColumn(nc);
   }
+
   displayGameboard()
 
 }
@@ -291,95 +319,135 @@ function sortColumnDown(column,col){
     return nc;
 }
 
-  function returnCount(arrayToCheck, element){
-    let array = arrayToCheck;
-    let elementToFind = element;
-    let numberFound = array.filter(x => x === elementToFind).length;
-    return numberFound;
-  }
+function returnCount(arrayToCheck, element){
+  let array = arrayToCheck;
+  let elementToFind = element;
+  let numberFound = array.filter(x => x === elementToFind).length;
+  return numberFound;
+}
 
-  function addRandom(){
-    console.log("\ngameboard", gameboard.toString());
-    let opensquares = [];
-    for(i = 0; i < 4; i++){
-      for(j = 0; j < 4; j++){
-        if(gameboard[i][j] === 0){
-          opensquares.push({
-            x: i,
-            y: j
-          })
-        }
+function addRandom(){
+  console.log("\ngameboard", gameboard.toString());
+  let opensquares = [];
+  for(i = 0; i < 4; i++){
+    for(j = 0; j < 4; j++){
+      if(gameboard[i][j] === 0){
+        opensquares.push({
+          x: i,
+          y: j
+        })
       }
     }
-    // console.log("opensquares contains:", opensquares.length);
-    // for(let b = 0; b < opensquares.length; b++){
-    //   console.log(opensquares[b]);
-    // }
-    // console.log("opensquares", opensquares.toString());
-
-    if(opensquares.length > 0){
-      // Get a randomSquare from the opensquares dictionary
-      let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
-      // console.log("randomSquare", randomSquare);
-      // get a random number less than 1
-      let randNum = Math.random(1);
-      // console.log("randNum",randNum);
-      let newNum = randNum > 0.5 ? 2 : 4;
-      gameboard[randomSquare.x][randomSquare.y] = newNum;
-      randomInsert = "gameboard[" + randomSquare.x + "][" + randomSquare.y + "]";
-      console.log("Random insert: ", randomInsert)
-
-
-
-      // This section updates the board view ---------
-
-      // Populate the cell
-      let x = randomSquare.x;
-      let y = randomSquare.y;
-      let targetCell = x.toString() + y.toString();
-      // console.table("random: gameboard[" + randomSquare.x + "][" + randomSquare.y + "]");
-
-      // This is what makes the number visible on the grid
-      // $(document).ready(function(){
-      //   $('#'+targetCell).text(newNum);
-      // });
-      displayGameboard()
-      // ---------------------------------------------
-
-    }
-    console.log("gameboard", gameboard.toString());
-    console.log("How many open squares?", opensquares.length-1)
-    // action = 0;
-    // console.table(gameboard);
   }
+  // console.log("opensquares contains:", opensquares.length);
+  // for(let b = 0; b < opensquares.length; b++){
+  //   console.log(opensquares[b]);
+  // }
+  // console.log("opensquares", opensquares.toString());
 
-  function displayGameboard(){ // This function not doing anything?
-    // console.log("*gameboard*", gameboard.toString());
-    $(document).ready(function(){
-      (gameboard[0][0] === 0) ? $('#00').text('') : $('#00').text(gameboard[0][0]);
-      (gameboard[0][1] === 0) ? $('#01').text('') : $('#01').text(gameboard[0][1]);
-      (gameboard[0][2] === 0) ? $('#02').text('') : $('#02').text(gameboard[0][2]); //$(.cell).css('background-color': '#f6f6ee');
-      (gameboard[0][3] === 0) ? $('#03').text('') : $('#03').text(gameboard[0][3]);
-      (gameboard[1][0] === 0) ? $('#10').text('') : $('#10').text(gameboard[1][0]);
-      (gameboard[1][1] === 0) ? $('#11').text('') : $('#11').text(gameboard[1][1]);
-      (gameboard[1][2] === 0) ? $('#12').text('') : $('#12').text(gameboard[1][2]);
-      (gameboard[1][3] === 0) ? $('#13').text('') : $('#13').text(gameboard[1][3]);
-      (gameboard[2][0] === 0) ? $('#20').text('') : $('#20').text(gameboard[2][0]);
-      (gameboard[2][1] === 0) ? $('#21').text('') : $('#21').text(gameboard[2][1]);
-      (gameboard[2][2] === 0) ? $('#22').text('') : $('#22').text(gameboard[2][2]);
-      (gameboard[2][3] === 0) ? $('#23').text('') : $('#23').text(gameboard[2][3]);
-      (gameboard[3][0] === 0) ? $('#30').text('') : $('#30').text(gameboard[3][0]);
-      (gameboard[3][1] === 0) ? $('#31').text('') : $('#31').text(gameboard[3][1]);
-      (gameboard[3][2] === 0) ? $('#32').text('') : $('#32').text(gameboard[3][2]);
-      (gameboard[3][3] === 0) ? $('#33').text('') : $('#33').text(gameboard[3][3]);
+  if(opensquares.length > 0){
+    // Get a randomSquare from the opensquares dictionary
+    let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
+    // console.log("randomSquare", randomSquare);
+    // get a random number less than 1
+    let randNum = Math.random(1);
+    // console.log("randNum",randNum);
+    let newNum = randNum > 0.5 ? 2 : 4;
+    gameboard[randomSquare.x][randomSquare.y] = newNum;
+    randomInsert = "gameboard[" + randomSquare.x + "][" + randomSquare.y + "]";
+    console.log("Random insert: ", randomInsert)
 
-    });
 
-    // $(.cell).css('background-color': '#f6f6ee');
-    // $('.cell').each(function(){
-    //   if($(this).text() === 2)$(this).css('background-color','white');
+
+    // This section updates the board view ---------
+
+    // Populate the cell
+    let x = randomSquare.x;
+    let y = randomSquare.y;
+    let targetCell = x.toString() + y.toString();
+    // console.table("random: gameboard[" + randomSquare.x + "][" + randomSquare.y + "]");
+
+    // This is what makes the number visible on the grid
+    // $(document).ready(function(){
+    //   $('#'+targetCell).text(newNum);
     // });
-  };
+    displayGameboard()
+    // ---------------------------------------------
+
+  }
+  console.log("gameboard", gameboard.toString());
+  console.log("How many open squares?", opensquares.length-1)
+  // action = 0;
+  // console.table(gameboard);
+}
+
+function returnCellColor(value){
+  let cellColors = ['#ccc', 'white', '#FFFDE7', '#FF9E80', '#FF8A65', '#FF5722', '#FFC107', '#C0CA33'];
+  let cellValues = [0, 2, 4, 8, 16, 32, 64, 128];
+  let bgColor = cellColors[cellValues.indexOf(value)];
+  return bgColor;
+}
+
+function displayGameboard(){
+
+  // let gameboard = [[0,4,2,2], [0,0,0,0], [2,0,0,0], [2,0,0,0]];
+  let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
+
+  $(document).ready(function(){
+    // o = outer; i = inner
+    for (let o = 0; o < 4; o++) {
+      for (let i = 0; i < 4; i++) {
+        let value = gameboard[o][i];
+        let div = divboard[o][i];
+        // console.log(div, value);
+        let bgColor = returnCellColor(value);
+        let text = value;
+        if (value === 0) { text = ''; }
+        $('.'+div).text(text).css("background-color", bgColor);
+      }
+    }
+  });
+}
+
+function slideHorizontal(numSpaces, direction, textTransform, div){
+  let o = "";
+  if (direction === 'l') o = '-=';
+  if (direction === 'r') o = '+=';
+  let numberOfSpaces = parseInt(numSpaces);
+  let cellWidth = 125;
+  let moveDistance = numberOfSpaces * cellWidth;
+  let moveInstruction = o + moveDistance.toString();
+  let targetDiv = '.' + div;
+  let bgColor = returnCellColor(textTransform);
+  $(targetDiv).animate({
+       left: moveInstruction
+    }, 155, 'linear');
+
+  $(targetDiv).delay(1).queue(function(f) {
+    $(this).text(textTransform).css("background-color", bgColor); f();
+  });
+}
+
+function slideVertical(numSpaces, direction, textTransform, div){
+  let o = "";
+  if (direction === 'u') o = '-=';
+  if (direction === 'd') o = '+=';
+  let numberOfSpaces = parseInt(numSpaces);
+  let cellWidth = 125;
+  let moveDistance = numberOfSpaces * cellWidth;
+  let moveInstruction = o + moveDistance.toString();
+  let targetDiv = '.' + div;
+  let bgColor = returnCellColor(textTransform);
+  $(targetDiv).animate({
+       top: moveInstruction
+    }, 155, 'linear');
+
+  $(targetDiv).delay(1).queue(function(f) {
+    $(this).text(textTransform).css("background-color", bgColor); f();
+  });
+}
+
+
 
   </script>
   <style>
@@ -427,33 +495,51 @@ function sortColumnDown(column,col){
   .two {
     background-color: #f6f6ee;
   }
+
+  .a, .b, .c, .d, .e, .f, .g, .h, .i, .j, .k, .l, .m, .n, .o, .p {
+    width: 110px;
+    height: 110px;
+  /*   background-color: white; */
+  /*   border: solid 1px black; */
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-family: Arial;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 5px;
+   /* for position properties to work in jQuery animate, you need to make
+    sure the element being animated has a position property defined */
+    position: relative;
+    z-index: 5;
+  }
   </style>
 </head>
 <body>
 <h1>2048 - The Game</h1>
 
-  <div class="container">
-    <div class="grid">
-      <div class="cell" id="00"></div>
-      <div class="cell" id="01"></div>
-      <div class="cell" id="02"></div>
-      <div class="cell" id="03"></div>
+<div class="container">
+  <div class="grid">
+    <div class="cell"><div class="a"></div></div>
+    <div class="cell"><div class="b"></div></div>
+    <div class="cell"><div class="c"></div></div>
+    <div class="cell"><div class="d"></div></div>
 
-      <div class="cell" id="10"></div>
-      <div class="cell" id="11"></div>
-      <div class="cell" id="12"></div>
-      <div class="cell" id="13"></div>
+    <div class="cell"><div class="e"></div></div>
+    <div class="cell"><div class="f"></div></div>
+    <div class="cell"><div class="g"></div></div>
+    <div class="cell"><div class="h"></div></div>
 
-      <div class="cell" id="20"></div>
-      <div class="cell" id="21"></div>
-      <div class="cell" id="22"></div>
-      <div class="cell" id="23"></div>
+    <div class="cell"><div class="i"></div></div>
+    <div class="cell"><div class="j"></div></div>
+    <div class="cell"><div class="k"></div></div>
+    <div class="cell"><div class="l"></div></div>
 
-      <div class="cell" id="30"></div>
-      <div class="cell" id="31"></div>
-      <div class="cell" id="32"></div>
-      <div class="cell" id="33"></div>
-    </div>
+    <div class="cell"><div class="m"></div></div>
+    <div class="cell"><div class="n"></div></div>
+    <div class="cell"><div class="o"></div></div>
+    <div class="cell"><div class="p"></div></div>
   </div>
+</div>
 
 </body>
