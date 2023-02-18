@@ -24,7 +24,7 @@
             // console.table("Up arrow");
             console.log("Up arrow ---------------------------------------------------------------------------");
 
-            upArrow();
+            // upArrow();
             // displayGameboard();
             if ( action ){
               addRandom();
@@ -44,19 +44,18 @@
             break;
         case 'ArrowLeft':
             // left arrow
-            console.table("Left arrow");
-            addRandom();
-            break;
+            // console.table("Left arrow");
+            // addRandom();
+            // break;
         case 'ArrowRight':
             // right arrow
-            console.table("Right arrow");
-            addRandom();
-            break;
+            // console.table("Right arrow");
+            // addRandom();
+            // break;
     }
 };
 
 function upArrow(){
-  displayTextMatrix();
 
   // Step 1 - Load the column into an array
   // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
@@ -67,7 +66,7 @@ function upArrow(){
 
 
   gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-  console.log("-gameboard BEFORE", gameboardBefore);
+  // console.log("-gameboard BEFORE", gameboardBefore);
 
   console.log('c0 ', c0.toString(), "--------------------");
   let nc = sortColumnUp(c0,0);
@@ -78,24 +77,26 @@ function upArrow(){
   console.log('c3 ', c3.toString(), "--------------------");
   nc = sortColumnUp(c3,3);
 
-  console.log('nc ', nc.toString());
+  // console.log('nc ', nc.toString());
 
   let gameboardAfter = gameboard.slice().toString(); // shallow copy
-  console.log("-gameboard AFTER", gameboardAfter);
+  // console.log("-gameboard AFTER", gameboardAfter);
 
   if (gameboardBefore === gameboardAfter) {
-    console.log("-gameboard BEFORE", gameboardBefore);
-    console.log("-gameboard AFTER", gameboardAfter);
+    // console.log("-gameboard BEFORE", gameboardBefore);
+    // console.log("-gameboard AFTER", gameboardAfter);
     console.log("!! NO ACTION !!");
+    addRandom();
     action = 0;
   } else {
-    console.log("-gameboard BEFORE", gameboardBefore);
-    console.log("-gameboard AFTER",  gameboardAfter);
-    console.log("ACTION!");
+    // console.log("-gameboard BEFORE", gameboardBefore);
+    // console.log("-gameboard AFTER",  gameboardAfter);
+    // console.log("ACTION!");
     action = 1;
     // let sr = sortColumn(nc);
   }
   // displayGameboard()
+  displayTextMatrix();
 
 }
 
@@ -106,13 +107,13 @@ function emptyColumn(column) {
 }
 
 function determineMoves(oc) {
-  console.log("------------------------------ oc -------------------------------------");
+  // console.log("------------------------------ oc -------------------------------------");
   // Returns the first available move
   let arr = [];    // scratch array
   for(k = 0; k < oc.length; k++) {
     arr.push(oc[k]);
   }
-  console.log("Scratch array", arr);
+  // console.log("Scratch array", arr);
 
   let animationInstructions = [];
   let moves = {};
@@ -126,7 +127,7 @@ function determineMoves(oc) {
   let alreadyMoved = 0;
   let alreadyTransformed = '';
   for (k = 0; k < arr.length; k++) {
-    console.log("\nCurrent index:", k);
+    // console.log("\nCurrent index:", k);
     if (arr[k] === 0) {
       moveSpaces++;
       action = 1;
@@ -134,7 +135,7 @@ function determineMoves(oc) {
       if (k > 0) {  // if not first index (skip first index since we know it can't move)
 
         let destinationCell = k - moveSpaces;
-        console.log('destinationCell', destinationCell);
+        // console.log('destinationCell', destinationCell);
         if(destinationCell > 0) {   // if not the first cell
           let destCelllMinusOne = destinationCell - 1;
           let priorCell = arr[destCelllMinusOne];
@@ -145,7 +146,7 @@ function determineMoves(oc) {
           // [4,2,2,4] should end up with [4,4,4,0], not [4,8,0,0]
           // && !(destCelllMinusOne === alreadyTransformed)
 
-          console.log('priorCell arr[k]', priorCell, arr[k]);
+          // console.log('priorCell arr[k]', priorCell, arr[k]);
           if (priorCell === arr[k] && !(destCelllMinusOne === alreadyTransformed)){    // they are equal, so we can add them together
             transform = priorCell + arr[k];
             moveSpaces++;
@@ -155,8 +156,8 @@ function determineMoves(oc) {
             arr[k - moveSpaces] = transform;
             arr[k] = 0;  // set this value to zero sinse a value was just moved out of it.
             nc[k] = 0;  // set this value to zero sinse a value was just moved out of it.
-            console.log("Scratch array", arr);
-            console.log("nc after add", nc);
+            // console.log("Scratch array", arr);
+            // console.log("nc after add", nc);
             moves['moveSpaces'] = moveSpaces;
             moves['index'] = k;
             moves['transform'] = transform;
@@ -174,7 +175,7 @@ function determineMoves(oc) {
               cellValue = arr[k];
               arr[k] = 0;  // set this value to zero sinse a value was just moved out of it.
               nc[k] = 0;  // set this value to zero sinse a value was just moved out of it.
-              console.log("Scratch array", arr, "nc", nc);
+              // console.log("Scratch array", arr, "nc", nc);
               moves['moveSpaces'] = moveSpaces;
               moves['index'] = k;
               moves['transform'] = '';
@@ -203,7 +204,7 @@ function determineMoves(oc) {
           cellValue = arr[k];
           arr[k] = 0;  // set this value to zero sinse a value was just moved out of it.
           nc[k] = 0;  // set this value to zero sinse a value was just moved out of it.
-          console.log("Scratch array", arr);
+          // console.log("Scratch array", arr);
           moves['moveSpaces'] = moveSpaces;
           moves['index'] = k;
           moves['transform'] = '';
@@ -221,21 +222,23 @@ function determineMoves(oc) {
   }
 }
 
-
+// Idea: Store up all four columns before calling slideVertical
+// Make 4 concurrent calls to slideVertical, without iteration
 function sortColumnUp(column,col){
+  console.log("sortColumnUp", column,col)
   let originalColumn = [];
   for(k = 0; k < column.length; k++) {
     originalColumn.push(column[k]);
   }
 
-  let oc = originalColumn;  // original column
+  let oc = originalColumn;     // original column
   // let sc = column;          // scratch column
-  let nc = [0,0,0,0];       // new (updated) column
+  let nc = [0,0,0,0];          // new (updated) column
 
   // oc = [ 0, 2, 2, 2 ] ends up giving me [ 4, 2, 0, 2 ] after 3 iterations
   // oc = [ 2, 2, 2, 2 ];
 
-  console.log("oc", oc);
+  // console.log("oc", oc);
   // console.log("nc", nc);
 
 
@@ -246,17 +249,17 @@ function sortColumnUp(column,col){
     moves = animationInstructions[animationInstructions.length-1];
     if (moves) {
 
-      console.log("Moves", moves);
-      console.log("  nc", moves.nc);
+      // console.log("Moves", moves);
+      // console.log("  nc", moves.nc);
       nc = moves.nc; //enable this line when it is working..
       // Update gameboard with new column
       gameboard[0][col] = nc[0];
       gameboard[1][col] = nc[1];
       gameboard[2][col] = nc[2];
       gameboard[3][col] = nc[3];
-      console.log('animationInstructions:')
+      // console.log('animationInstructions:')
       for(r = 0; r < animationInstructions.length; r++){
-        console.log(animationInstructions[r]);
+        // console.log(animationInstructions[r]);
         let numSpaces = animationInstructions[r].moveSpaces;
         let textTransform = animationInstructions[r].transform;
         let cellValue = animationInstructions[r].cellValue;
@@ -270,7 +273,7 @@ function sortColumnUp(column,col){
         slideVertical(numSpaces, 'u', textTransform, div);
       }
     } else {
-      console.log('No moves!')
+      console.log('No moves! (sortColumnUp)')
     }
   }
   return nc;
@@ -278,6 +281,7 @@ function sortColumnUp(column,col){
 
 
 function sortColumnUpX(column,col){
+  console.log("sortColumnUpX", column,col)
   // let currentColumn = "c" + col.toString();
   let c1 = column;
   let originalColumn = [];
@@ -363,10 +367,10 @@ function displayTextMatrix(){
   thirdRow  = gameboard[2];
   secondRow = gameboard[1];
   topRow    = gameboard[0];
-  console.log("   top row", topRow.toString());
+  console.log("\n   top row", topRow.toString());
   console.log("second row", secondRow.toString());
   console.log(" third row", thirdRow.toString());
-  console.log("bottom row", bottomRow.toString());
+  console.log("bottom row", bottomRow.toString(), "\n\n");
 }
 
 function deepCopy(array) {
@@ -433,6 +437,7 @@ function downArrow(){
     console.log("-gameboard BEFORE", gameboardBefore);
     console.log("-gameboard AFTER", gameboardAfter);
     console.log("!! NO ACTION !!");
+    addRandom();
     action = 0;
   } else {
     console.log("-gameboard BEFORE", gameboardBefore);
@@ -537,8 +542,8 @@ function returnCount(arrayToCheck, element){
 }
 
 function addRandom(){
-  displayTextMatrix();
-  console.log("\ngameboard", gameboard.toString());
+  // displayTextMatrix();
+  // console.log("\ngameboard", gameboard.toString());
   let opensquares = [];
   for(i = 0; i < 4; i++){
     for(j = 0; j < 4; j++){
@@ -566,7 +571,7 @@ function addRandom(){
     let newNum = randNum > 0.5 ? 2 : 4;
     gameboard[randomSquare.x][randomSquare.y] = newNum;
     randomInsert = "gameboard[" + randomSquare.x + "][" + randomSquare.y + "]";
-    console.log("Random insert: ", randomInsert)
+    // console.log("Random insert: ", randomInsert)
 
 
 
@@ -640,6 +645,10 @@ function slideHorizontal(numSpaces, direction, textTransform, div){
   });
 }
 
+// Make this function so that it animates 4 columns at a time, without iterating through columns
+// It should take in an array of 4 columns, each with its own arguments
+// OR
+// just call this function 4 times in parallel
 function slideVertical(numSpaces, direction, textTransform, div){
   // div is the class cell to be moved
   console.log("Entering slideVertical:", numSpaces, direction, textTransform, div);
