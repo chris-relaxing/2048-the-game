@@ -26,7 +26,7 @@
 
             // upArrow();
             // displayGameboard();
-            if ( action ){
+            if ( action ) {
               addRandom();
             }
 
@@ -37,7 +37,7 @@
 
             downArrow();
             displayGameboard();
-            if ( action ){
+            if ( action ) {
               addRandom();
             }
 
@@ -55,6 +55,123 @@
     }
 };
 
+/*
+* removeZeros - This function returns a given array with all zeros removed.
+*/
+function removeZeros(arr) {
+  for(var i=0; i < arr.length; i++) {
+     if(arr[i] === 0) {
+         arr.splice(i, 1);
+         i--;
+     }
+  }
+  // console.log("Array without zeros being returned: ", arr);
+  return arr;
+}
+
+/*
+* padZeros - All rows should have a length of 4. So this function will
+*   pad zeros on the left side until the length of the array is 4
+*/
+function padZeros(arr) {
+  // Determine current length of row to pad zeros
+    let short = 4 - arr.length;
+    // console.log("The current row is short by: ", short);
+    for(x = 0; x < short; x++) {
+      arr.unshift(0);
+    }
+  return arr;
+}
+
+function combineLastTwo(arr) {
+  let last = arr.length - 1;
+  let secondToLast = last - 1;
+  if(arr[secondToLast] === arr[last]) {
+    arr[secondToLast] = arr[last] *2;
+    arr.pop();
+  }
+  return arr;
+}
+
+function rowTransform(row) {
+  const originalRow = [...row];
+
+  // Before the below, let's remove all zeros, then we will see how many digits remain
+  row = removeZeros(row);
+
+  // Case of 4 numbers in a row with no zeros
+  // Pre-process the cases where there is more than one potential combine. i.e. [4,4,4,4]
+  // If there are no zeroes in the row, then we could have more than one combine that needs to happen
+  // ------------------------------
+  if(row.length === 4) {
+  // if(!row.includes(0)) {
+    // console.log("This is the length===4 case..BEFORE", row);
+
+    // Step 1 - Combines
+    // Combine the last two numbers, if possible
+    // TO DO: Generalize this so that the indexes are calculated to be the last index
+    if(row[2] === row[3]) {
+      row[2] = row[3] *2;
+      row.pop();
+    }
+    // row = combineLastTwo(row);
+
+    // Combine the first two numbers, if possible
+    if(row[0] === row[1]) {
+      row[1] = row[1] *2;
+      row.shift();
+    }
+
+    // console.log("This is the target case..AFTER", row);
+
+    // Step 2 - Pad zeros
+    row = padZeros(row);
+    console.log(originalRow, "row after Step 2: ", row);
+  }
+  // ------------------------------
+  if(row.length === 3) {
+    // console.log("This is the length===3 case..BEFORE", row);
+     // Step 1 - Combines
+    // Combine the last two numbers, if possible
+    if(row[1] === row[2]) {
+      row[1] = row[2] *2;
+      row.pop();
+      // console.log("This is the target case..AFTER", row);
+    }
+    // Combine the first two numbers, if possible
+    else if(row[0] === row[1]) {
+      row[1] = row[1] *2;
+      row[0] = 0;
+    }
+    // console.log("This is the target case..AFTER", row);
+
+    // Step 2 - Pad zeros
+    row = padZeros(row);
+    console.log(originalRow, "row after Step 2: ", row);
+
+  }
+  // ------------------------------
+  if(row.length === 2) {
+    // console.log("This is the length===2 case..BEFORE", row);
+    if(row[0] === row[1]) {
+      row[0] = row[1] *2;
+      row.pop();
+      // console.log("This is the target case..AFTER", row);
+    }
+    // Step 2 - Pad zeros
+    row = padZeros(row);
+    console.log(originalRow, "row after Step 2: ", row);
+  }
+  // ------------------------------
+  if(row.length === 1) {
+    // console.log("This is the length===2 case..BEFORE", row);
+    row = padZeros(row);
+    console.log(originalRow, "row after Step 2: ", row);
+  }
+  console.log("Transformed row: ", padZeros(row));
+  // return row;
+}
+
 function upArrow(){
 
   // Step 1 - Load the column into an array
@@ -68,34 +185,34 @@ function upArrow(){
   gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
   // console.log("-gameboard BEFORE", gameboardBefore);
 
-  console.log('c0 ', c0.toString(), "--------------------");
-  let nc = sortColumnUp(c0,0);
-  console.log('c1 ', c1.toString(), "--------------------");
-  nc = sortColumnUp(c1,1);
-  console.log('c2 ', c2.toString(), "--------------------");
-  nc = sortColumnUp(c2,2);
-  console.log('c3 ', c3.toString(), "--------------------");
-  nc = sortColumnUp(c3,3);
+  // console.log('c0 ', c0.toString(), "--------------------");
+  // let nc = sortColumnUp(c0,0);
+  // console.log('c1 ', c1.toString(), "--------------------");
+  // nc = sortColumnUp(c1,1);
+  // console.log('c2 ', c2.toString(), "--------------------");
+  // nc = sortColumnUp(c2,2);
+  // console.log('c3 ', c3.toString(), "--------------------");
+  // nc = sortColumnUp(c3,3);
 
   // console.log('nc ', nc.toString());
 
-  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  // let gameboardAfter = gameboard.slice().toString(); // shallow copy
   // console.log("-gameboard AFTER", gameboardAfter);
 
-  if (gameboardBefore === gameboardAfter) {
-    // console.log("-gameboard BEFORE", gameboardBefore);
-    // console.log("-gameboard AFTER", gameboardAfter);
-    console.log("!! NO ACTION !!");
-    addRandom();
-    action = 0;
-  } else {
-    // console.log("-gameboard BEFORE", gameboardBefore);
-    // console.log("-gameboard AFTER",  gameboardAfter);
-    // console.log("ACTION!");
-    action = 1;
-    // let sr = sortColumn(nc);
-  }
-  // displayGameboard()
+  // if (gameboardBefore === gameboardAfter) {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER", gameboardAfter);
+  //   console.log("!! NO ACTION !!");
+  //   addRandom();
+  //   action = 0;
+  // } else {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER",  gameboardAfter);
+  //   // console.log("ACTION!");
+  //   action = 1;
+  //   // let sr = sortColumn(nc);
+  // }
+  // // displayGameboard()
   displayTextMatrix();
 
 }
@@ -398,54 +515,61 @@ function downArrow(){
   gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
   console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
+  // let direction = 'd';
 
-  let direction = 'd';
+  // console.log('c0 ', c0.toString(), "--------------------");
+  // let colDivs = ['a','e','i','m']
+  // let nc = sortColumnDown(c0, 0, colDivs);
 
-  console.log('c0 ', c0.toString(), "--------------------");
-  let colDivs = ['a','e','i','m']
-  let nc = sortColumnDown(c0, 0, colDivs);
-
-  // Figure out the four moves (one for each column)
-  // slideHorizontal(numSpaces, direction, textTransform, div)
-  // slideVertical(2, 'd', 2, 'i');slideVertical(3, 'd', 2, 'm');
-  // this column is a,e,i,m
-
-  // gameboard[0][col] = nc[0];
-  // gameboard[1][col] = nc[1];
-  // gameboard[2][col] = nc[2];
-  // gameboard[3][col] = nc[3];
+  let columns = [c0, c1, c2, c3];
+  console.log("columns", columns);
 
 
+  for(line of columns){
+    console.log("---- Line to be tested: ", line);
+    rowTransform(line);
+  }
+  // gameboard = columnsMatrix;
 
-  console.log('c1 ', c1.toString(), "--------------------");
-  colDivs = ['b','f','j','n'];
-  nc = sortColumnDown(c1, 1, colDivs);
-  console.log('c2 ', c2.toString(), "--------------------");
-  colDivs = ['c','g','k','o'];
-  nc = sortColumnDown(c2, 2, colDivs);
-  console.log('c3 ', c3.toString(), "--------------------");
-  colDivs = ['d','h','l','p'];
-  nc = sortColumnDown(c3, 3, colDivs);
+  // console.log('c1 ', c1.toString(), "--------------------");
+  // colDivs = ['b','f','j','n'];
+  // nc = sortColumnDown(c1, 1, colDivs);
+  // console.log('c2 ', c2.toString(), "--------------------");
+  // colDivs = ['c','g','k','o'];
+  // nc = sortColumnDown(c2, 2, colDivs);
+  // console.log('c3 ', c3.toString(), "--------------------");
+  // colDivs = ['d','h','l','p'];
+  // nc = sortColumnDown(c3, 3, colDivs);
 
-  console.log('nc ', nc.toString());
+  // console.log('nc ', nc.toString());
+  //
+
+  //
+
+
+  // Update gameboard with new column
+  gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
+  gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
+  gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
+  gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+  displayTextMatrix()
 
   let gameboardArrayAfter = deepCopy(gameboard);
   let gameboardAfter = gameboard.slice().toString(); // shallow copy
   console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
-  if (gameboardBefore === gameboardAfter) {
-    console.log("-gameboard BEFORE", gameboardBefore);
-    console.log("-gameboard AFTER", gameboardAfter);
-    console.log("!! NO ACTION !!");
-    addRandom();
-    action = 0;
-  } else {
-    console.log("-gameboard BEFORE", gameboardBefore);
-    console.log("-gameboard AFTER",  gameboardAfter);
-    console.log("ACTION!");
-    action = 1;
-    // let sr = sortColumn(nc);
-  }
+  // if (gameboardBefore === gameboardAfter) {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER", gameboardAfter);
+  //   console.log("!! NO ACTION !!");
+  //   addRandom();
+  //   action = 0;
+  // } else {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER",  gameboardAfter);
+  //   console.log("ACTION!");
+  //   action = 1;
+  // }
 
   displayGameboard()
 
