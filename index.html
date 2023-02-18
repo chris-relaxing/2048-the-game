@@ -13,6 +13,9 @@
   let action = 1;
   let gameboardBefore = ""; // Make this global
 
+  // TODO: Algorithm is failing at this point: Middle numbers won't combine. 
+  // For example [8, 4, 4, 2] or [4, 8, 8, 2]
+
   // Add first two numbers to the board
   addRandom();
   addRandom();
@@ -40,7 +43,9 @@
         case 'ArrowLeft':
             // left arrow
             console.table("Left arrow");
-            addRandom();
+            leftArrow();
+            displayGameboard();
+            if (action) { addRandom(); }
             break;
         case 'ArrowRight':
             // right arrow
@@ -296,6 +301,59 @@ function rightArrow(){
   // gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
   // gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
   // gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+  displayTextMatrix()
+
+  let gameboardArrayAfter = deepCopy(gameboard);
+  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
+
+  // if (gameboardBefore === gameboardAfter) {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER", gameboardAfter);
+  //   console.log("!! NO ACTION !!");
+  //   addRandom();
+  //   action = 0;
+  // } else {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER",  gameboardAfter);
+  //   console.log("ACTION!");
+  //   action = 1;
+  // }
+
+  displayGameboard()
+}
+
+function leftArrow(){
+  displayTextMatrix();
+
+  // Step 1 - Reverse the rows of the gameboard to go left
+  let c0 = gameboard[0].reverse();
+  let c1 = gameboard[1].reverse();
+  let c2 = gameboard[2].reverse();
+  let c3 = gameboard[3].reverse();
+
+  console.log("c0", c0);
+  console.log("c1", c1);
+  console.log("c2", c2);
+  console.log("c3", c3);
+
+  let columns = [c0, c1, c2, c3];
+  console.log("columns", columns);
+
+  let gameboardArrayBefore = deepCopy(gameboard);
+  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+  console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
+  for(line of columns){
+    console.log("---- Line to be tested: ", line);
+    rowTransform(line);
+  }
+
+  // Update gameboard with new column
+  gameboard[0] = columns[0].reverse();
+  gameboard[1] = columns[1].reverse();
+  gameboard[2] = columns[2].reverse();
+  gameboard[3] = columns[3].reverse();
   displayTextMatrix()
 
   let gameboardArrayAfter = deepCopy(gameboard);
