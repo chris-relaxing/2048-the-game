@@ -25,10 +25,8 @@
             console.log("Up arrow ---------------------------------------------------------------------------");
 
             upArrow();
-            // displayGameboard();
-            if ( action ) {
-              addRandom();
-            }
+            displayGameboard();
+            if (action) { addRandom(); }
 
             break;
         case 'ArrowDown':
@@ -37,21 +35,20 @@
 
             downArrow();
             displayGameboard();
-            if ( action ) {
-              addRandom();
-            }
-
+            if (action) { addRandom(); }
             break;
         case 'ArrowLeft':
             // left arrow
-            // console.table("Left arrow");
-            // addRandom();
-            // break;
+            console.table("Left arrow");
+            addRandom();
+            break;
         case 'ArrowRight':
             // right arrow
-            // console.table("Right arrow");
-            // addRandom();
-            // break;
+            console.table("Right arrow");
+            rightArrow();
+            displayGameboard();
+            if (action) { addRandom(); }
+            break;
     }
 };
 
@@ -172,7 +169,7 @@ function rowTransform(row) {
   // return row;
 }
 
-function upArrow(){
+function upArrow() {
 
   // Step 1 - Load the column into an array
   // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
@@ -219,8 +216,109 @@ function upArrow(){
   // }
 
   displayGameboard()
-
 }
+
+function downArrow(){
+  displayTextMatrix();
+
+  // Step 1 - Load the column into an array
+  // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+  let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+  let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
+  let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
+  let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
+
+  let gameboardArrayBefore = deepCopy(gameboard);
+  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+  console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
+  let columns = [c0, c1, c2, c3];
+  console.log("columns", columns);
+
+
+  for(line of columns){
+    console.log("---- Line to be tested: ", line);
+    rowTransform(line);
+  }
+
+  // Update gameboard with new column
+  gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
+  gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
+  gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
+  gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+  displayTextMatrix()
+
+  let gameboardArrayAfter = deepCopy(gameboard);
+  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
+
+  // if (gameboardBefore === gameboardAfter) {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER", gameboardAfter);
+  //   console.log("!! NO ACTION !!");
+  //   addRandom();
+  //   action = 0;
+  // } else {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER",  gameboardAfter);
+  //   console.log("ACTION!");
+  //   action = 1;
+  // }
+
+  displayGameboard();
+}
+
+function rightArrow(){
+  displayTextMatrix();
+
+  // Step 1 - Load the column into an array
+  // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
+  // let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+  // let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
+  // let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
+  // let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
+
+  let gameboardArrayBefore = deepCopy(gameboard);
+  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+  console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
+  let columns = gameboard;
+  console.log("columns", columns);
+
+
+  for(line of columns){
+    console.log("---- Line to be tested: ", line);
+    rowTransform(line);
+  }
+
+  // Update gameboard with new column
+  // gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
+  // gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
+  // gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
+  // gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+  displayTextMatrix()
+
+  let gameboardArrayAfter = deepCopy(gameboard);
+  let gameboardAfter = gameboard.slice().toString(); // shallow copy
+  console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
+
+  // if (gameboardBefore === gameboardAfter) {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER", gameboardAfter);
+  //   console.log("!! NO ACTION !!");
+  //   addRandom();
+  //   action = 0;
+  // } else {
+  //   // console.log("-gameboard BEFORE", gameboardBefore);
+  //   // console.log("-gameboard AFTER",  gameboardAfter);
+  //   console.log("ACTION!");
+  //   action = 1;
+  // }
+
+  displayGameboard()
+}
+
+
 
 function emptyColumn(column) {
   let colMax = Math.max.apply(null, column);
@@ -423,58 +521,6 @@ function deepCopy(array) {
 }
 
 
-function downArrow(){
-  displayTextMatrix();
-
-  // Step 1 - Load the column into an array
-  // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
-  let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
-  let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
-  let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
-  let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
-
-  let gameboardArrayBefore = deepCopy(gameboard);
-  gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-  console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
-
-  let columns = [c0, c1, c2, c3];
-  console.log("columns", columns);
-
-
-  for(line of columns){
-    console.log("---- Line to be tested: ", line);
-    rowTransform(line);
-  }
-
-  // Update gameboard with new column
-  gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-  gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-  gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-  gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
-  displayTextMatrix()
-
-  let gameboardArrayAfter = deepCopy(gameboard);
-  let gameboardAfter = gameboard.slice().toString(); // shallow copy
-  console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
-
-  // if (gameboardBefore === gameboardAfter) {
-  //   // console.log("-gameboard BEFORE", gameboardBefore);
-  //   // console.log("-gameboard AFTER", gameboardAfter);
-  //   console.log("!! NO ACTION !!");
-  //   addRandom();
-  //   action = 0;
-  // } else {
-  //   // console.log("-gameboard BEFORE", gameboardBefore);
-  //   // console.log("-gameboard AFTER",  gameboardAfter);
-  //   console.log("ACTION!");
-  //   action = 1;
-  // }
-
-  displayGameboard()
-
-}
-
-
 function sortColumnDown(column,col,colDivs){
   // let currentColumn = "c" + col.toString();
 
@@ -611,11 +657,11 @@ function addRandom(){
     //   $('#'+targetCell).text(newNum);
     // });
     displayGameboard()
-    displayTextMatrix();
+    // displayTextMatrix();
     // ---------------------------------------------
 
   }
-  console.log("gameboard", gameboard.toString());
+  // console.log("gameboard", gameboard.toString());
   console.log("How many open squares?", opensquares.length-1)
   // action = 0;
   // console.table(gameboard);
