@@ -123,13 +123,20 @@ function rowTransform(row) {
         }
         // row = combineLastTwo(row);
 
+        // Combine the middle two numbers, if possible
+        else if(row[1] === row[2]) {
+            row[2] = row[1] *2;
+            row[1] = row[0];
+            row.shift();
+        }
+
         // Combine the first two numbers, if possible
-        if(row[0] === row[1]) {
+        else if(row[0] === row[1]) {
             row[1] = row[1] *2;
             row.shift();
         }
 
-        // console.log("This is the target case..AFTER", row);
+
 
         // Step 2 - Pad zeros
         row = padZeros(row);
