@@ -87,29 +87,25 @@ function rowTransform(row) {
     // If there are no zeroes in the row, then we could have more than one combine that needs to happen
     // ------------------------------
     if(row.length === 4) {
-    // if(!row.includes(0)) {
         // console.log("This is the length===4 case..BEFORE", row);
 
         // Step 1 - Combines
         // Combine the last two numbers, if possible
-        // TO DO: Generalize this so that the indexes are calculated to be the last index
         if(row[2] === row[3]) {
             row[2] = row[3] *2;
             row.pop();
         }
-        // row = combineLastTwo(row);
 
-        // Combine the middle two numbers, if possible
-        else if(row[1] === row[2]) {
-            row[2] = row[1] *2;
-            row[1] = row[0];
-            row.shift();
+        // Combine the middle two numbers, if possible (only if last two didn't combine)
+        if(row.length >= 3 && row[1] === row[2]) {
+            row[1] = row[2] *2;
+            row.splice(2, 1); // Remove the combined tile
         }
 
-        // Combine the first two numbers, if possible
-        else if(row[0] === row[1]) {
-            row[1] = row[1] *2;
-            row.shift();
+        // Combine the first two numbers, if possible (only if middle two didn't combine)
+        if(row.length >= 2 && row[0] === row[1]) {
+            row[0] = row[1] *2;
+            row.splice(1, 1); // Remove the combined tile
         }
 
         // Step 2 - Pad zeros
@@ -124,7 +120,6 @@ function rowTransform(row) {
         if(row[1] === row[2]) {
             row[1] = row[2] *2;
             row.pop();
-        // console.log("This is the target case..AFTER", row);
         }
         // Combine the first two numbers, if possible
         else if(row[0] === row[1]) {
@@ -298,6 +293,30 @@ function findTileDestination(beforeBoard, afterBoard, row, col, value, direction
             } else {
                 // Hit a different tile, stop before it
                 break;
+            }
+        }
+    }
+    
+    // Double-check: if we didn't find the value in afterBoard at our calculated position,
+    // search the entire row/column in afterBoard to find where it actually ended up
+    if (direction === 'up' || direction === 'down') {
+        if (afterBoard[newRow][col] !== value && afterBoard[newRow][col] !== value * 2) {
+            // Value not at expected position, search the column in afterBoard
+            for (let r = 0; r < 4; r++) {
+                if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
+                    newRow = r;
+                    break;
+                }
+            }
+        }
+    } else {
+        if (afterBoard[row][newCol] !== value && afterBoard[row][newCol] !== value * 2) {
+            // Value not at expected position, search the row in afterBoard
+            for (let c = 0; c < 4; c++) {
+                if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
+                    newCol = c;
+                    break;
+                }
             }
         }
     }
