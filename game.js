@@ -18,8 +18,8 @@ document.onkeydown = function (e) {
           console.log("Up arrow ---------------------------------------------------------------------------");
 
           upArrow();
-          displayGameboard();
-          if (action) { addRandom(); }
+          // Removed displayGameboard() - it's now called in the animation callback
+          // if (action) { addRandom(); } - moved to callback
 
           break;
       case 'ArrowDown':
@@ -27,22 +27,22 @@ document.onkeydown = function (e) {
           console.table("Down arrow");
 
           downArrow();
-          displayGameboard();
-          if (action) { addRandom(); }
+          // Removed displayGameboard() - it's now called in the animation callback
+          // if (action) { addRandom(); } - moved to callback
           break;
       case 'ArrowLeft':
           // left arrow
           console.table("Left arrow");
           leftArrow();
-          displayGameboard();
-          if (action) { addRandom(); }
+          // Removed displayGameboard() - it's now called in the animation callback
+          // if (action) { addRandom(); } - moved to callback
           break;
       case 'ArrowRight':
           // right arrow
           console.table("Right arrow");
           rightArrow();
-          displayGameboard();
-          if (action) { addRandom(); }
+          // Removed displayGameboard() - it's now called in the animation callback
+          // if (action) { addRandom(); } - moved to callback
           break;
   }
 };
@@ -157,7 +157,152 @@ function rowTransform(row) {
         console.log(originalRow, "row after Step 2: ", row);
     }
     console.log("Transformed row: ", padZeros(row));
-    // return row;
+    return row;
+}
+
+/**
+ * animateTileMovements - Animate tiles moving to their new positions
+ */
+function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
+    let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
+    let animationDuration = 500;
+    let animationsCompleted = 0;
+    let totalAnimations = 0;
+
+    // First pass: count how many tiles actually need to move
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            let value = beforeBoard[row][col];
+            if (value !== 0) {
+                let newPos = findTileDestination(beforeBoard, afterBoard, row, col, value, direction);
+                // Only count if position actually changed
+                if (newPos.row !== row || newPos.col !== col) {
+                    totalAnimations++;
+                }
+            }
+        }
+    }
+
+    // If no animations needed, just call callback
+    if (totalAnimations === 0) {
+        callback();
+        return;
+    }
+
+    // Second pass: animate only the tiles that moved
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            let value = beforeBoard[row][col];
+            if (value !== 0) {
+                let divClass = divboard[row][col];
+                let cellDiv = $('.'+divClass);
+                
+                // Find where this tile ends up
+                let newPos = findTileDestination(beforeBoard, afterBoard, row, col, value, direction);
+                
+                // Only animate if position actually changed
+                if (newPos.row !== row || newPos.col !== col) {
+                    // Calculate movement distance
+                    let rowDiff = newPos.row - row;
+                    let colDiff = newPos.col - col;
+                    let translateY = rowDiff * 125;
+                    let translateX = colDiff * 125;
+
+                    console.log(`Animating tile at (${row},${col}) value ${value} to (${newPos.row},${newPos.col}) - moving ${translateX}px, ${translateY}px`);
+                    
+                    // Raise z-index for animating tile so it appears on top
+                    cellDiv.css('z-index', '10');
+
+                    // Animate the movement
+                    cellDiv.css('transition', `transform ${animationDuration}ms ease-in-out`);
+                    cellDiv.css('transform', `translate(${translateX}px, ${translateY}px)`);
+
+                    setTimeout(() => {
+                        cellDiv.css('transition', '');
+                        cellDiv.css('transform', '');
+                        cellDiv.css('z-index', '5'); // Reset z-index
+                        animationsCompleted++;
+                        if (animationsCompleted === totalAnimations) {
+                            callback();
+                        }
+                    }, animationDuration);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * findTileDestination - Find where a tile ends up after a move
+ * This function simulates the movement for a single tile to find its final position
+ */
+function findTileDestination(beforeBoard, afterBoard, row, col, value, direction) {
+    let newRow = row;
+    let newCol = col;
+    
+    if (direction === 'up') {
+        // Move up: scan upward from current position
+        for (let r = row - 1; r >= 0; r--) {
+            if (beforeBoard[r][col] === 0) {
+                // Empty space, keep moving
+                newRow = r;
+            } else if (beforeBoard[r][col] === value && afterBoard[r][col] === value * 2) {
+                // This tile will combine with the one we found
+                newRow = r;
+                break;
+            } else {
+                // Hit a different tile, stop before it
+                break;
+            }
+        }
+    } else if (direction === 'down') {
+        // Move down: scan downward from current position
+        for (let r = row + 1; r <= 3; r++) {
+            if (beforeBoard[r][col] === 0) {
+                // Empty space, keep moving
+                newRow = r;
+            } else if (beforeBoard[r][col] === value && afterBoard[r][col] === value * 2) {
+                // This tile will combine with the one we found
+                newRow = r;
+                break;
+            } else {
+                // Hit a different tile, stop before it
+                break;
+            }
+        }
+    } else if (direction === 'left') {
+        // Move left: scan leftward from current position
+        for (let c = col - 1; c >= 0; c--) {
+            if (beforeBoard[row][c] === 0) {
+                // Empty space, keep moving
+                newCol = c;
+            } else if (beforeBoard[row][c] === value && afterBoard[row][c] === value * 2) {
+                // This tile will combine with the one we found
+                newCol = c;
+                break;
+            } else {
+                // Hit a different tile, stop before it
+                break;
+            }
+        }
+    } else if (direction === 'right') {
+        // Move right: scan rightward from current position
+        for (let c = col + 1; c <= 3; c++) {
+            if (beforeBoard[row][c] === 0) {
+                // Empty space, keep moving
+                newCol = c;
+            } else if (beforeBoard[row][c] === value && afterBoard[row][c] === value * 2) {
+                // This tile will combine with the one we found
+                newCol = c;
+                break;
+            } else {
+                // Hit a different tile, stop before it
+                break;
+            }
+        }
+    }
+    
+    return { row: newRow, col: newCol };
 }
 
 function upArrow() {
@@ -193,23 +338,19 @@ function upArrow() {
     let gameboardAfter = gameboard.slice().toString(); // shallow copy
     console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
-    // if (gameboardBefore === gameboardAfter) {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER", gameboardAfter);
-    //   console.log("!! NO ACTION !!");
-    //   addRandom();
-    //   action = 0;
-    // } else {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER",  gameboardAfter);
-    //   console.log("ACTION!");
-    //   action = 1;
-    // }
-
-    displayGameboard()
+    // Animate the movements, then display and add new tile
+    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'up', function() {
+        displayGameboard();
+        if (action) { addRandom(); }
+    });
 }
 
 function downArrow(){
+    // Capture BEFORE state first, before any modifications
+    let gameboardArrayBefore = deepCopy(gameboard);
+    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
     displayTextMatrix();
 
     // Step 1 - Load the column into an array
@@ -218,10 +359,6 @@ function downArrow(){
     let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
     let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
     let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
-
-    let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
     let columns = [c0, c1, c2, c3];
     console.log("columns", columns);
@@ -243,23 +380,19 @@ function downArrow(){
     let gameboardAfter = gameboard.slice().toString(); // shallow copy
     console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
-    // if (gameboardBefore === gameboardAfter) {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER", gameboardAfter);
-    //   console.log("!! NO ACTION !!");
-    //   addRandom();
-    //   action = 0;
-    // } else {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER",  gameboardAfter);
-    //   console.log("ACTION!");
-    //   action = 1;
-    // }
-
-    displayGameboard();
+    // Animate the movements, then display and add new tile
+    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'down', function() {
+        displayGameboard();
+        if (action) { addRandom(); }
+    });
 }
 
 function rightArrow(){
+    // Capture BEFORE state first, before any modifications
+    let gameboardArrayBefore = deepCopy(gameboard);
+    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
     displayTextMatrix();
 
     // Step 1 - Load the column into an array
@@ -268,10 +401,6 @@ function rightArrow(){
     // let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
     // let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
     // let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
-
-    let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
     let columns = gameboard;
     console.log("columns", columns);
@@ -293,23 +422,19 @@ function rightArrow(){
     let gameboardAfter = gameboard.slice().toString(); // shallow copy
     console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
-    // if (gameboardBefore === gameboardAfter) {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER", gameboardAfter);
-    //   console.log("!! NO ACTION !!");
-    //   addRandom();
-    //   action = 0;
-    // } else {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER",  gameboardAfter);
-    //   console.log("ACTION!");
-    //   action = 1;
-    // }
-
-    displayGameboard()
+    // Animate the movements, then display and add new tile
+    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'right', function() {
+        displayGameboard();
+        if (action) { addRandom(); }
+    });
 }
 
 function leftArrow(){
+    // Capture BEFORE state first, before any modifications
+    let gameboardArrayBefore = deepCopy(gameboard);
+    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
+
     displayTextMatrix();
 
     // Step 1 - Reverse the rows of the gameboard to go left
@@ -325,10 +450,6 @@ function leftArrow(){
 
     let columns = [c0, c1, c2, c3];
     console.log("columns", columns);
-
-    let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
     for(line of columns){
         console.log("---- Line to be tested: ", line);
@@ -346,20 +467,11 @@ function leftArrow(){
     let gameboardAfter = gameboard.slice().toString(); // shallow copy
     console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
 
-    // if (gameboardBefore === gameboardAfter) {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER", gameboardAfter);
-    //   console.log("!! NO ACTION !!");
-    //   addRandom();
-    //   action = 0;
-    // } else {
-    //   // console.log("-gameboard BEFORE", gameboardBefore);
-    //   // console.log("-gameboard AFTER",  gameboardAfter);
-    //   console.log("ACTION!");
-    //   action = 1;
-    // }
-
-    displayGameboard()
+    // Animate the movements, then display and add new tile
+    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'left', function() {
+        displayGameboard();
+        if (action) { addRandom(); }
+    });
 }
 
 /**
@@ -459,25 +571,32 @@ function returnCellColor(value) {
 
 /**
  * displayGameboard - Display the JS gameboard in the HTML/CSS grid
+ * Updated to only change tiles that have different values to prevent flickering
  */
 function displayGameboard() {
     // let gameboard = [[0,4,2,2], [0,0,0,0], [2,0,0,0], [2,0,0,0]];
     let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
 
-    $(document).ready(function(){
-        // o = outer; i = inner
-        for (let o = 0; o < 4; o++) {
+    // o = outer; i = inner
+    for (let o = 0; o < 4; o++) {
         for (let i = 0; i < 4; i++) {
             let value = gameboard[o][i];
             let div = divboard[o][i];
+            let cellDiv = $('.'+div);
             // console.log(div, value);
             let bgColor = returnCellColor(value);
             let text = value;
             if (value === 0) { text = ''; }
-            $('.'+div).text(text).css("background-color", bgColor);
+            
+            // Only update if the value changed to prevent flickering
+            if (cellDiv.text() != text) {
+                cellDiv.text(text);
+            }
+            if (cellDiv.css("background-color") != bgColor) {
+                cellDiv.css("background-color", bgColor);
+            }
         }
-        }
-    });
+    }
 }
 
 

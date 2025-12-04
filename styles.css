@@ -57,6 +57,7 @@ h1 {
     sure the element being animated has a position property defined */
     position: relative;
     z-index: 5;
+    will-change: transform;
 }
 
 /* Animation for new tiles */
