@@ -1,4 +1,3 @@
-
 let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
 let divLookup = [['a','e','i','m'], ['b','f','j','n'], ['c','g','k','o'], ['d','h','l','p']]
 let action = 1;
@@ -416,38 +415,35 @@ function addRandom(){
     if(opensquares.length > 0) {
         // Get a randomSquare from the opensquares dictionary
         let randomSquare =  opensquares[Math.floor(Math.random() * opensquares.length)];
-        // console.log("randomSquare", randomSquare);
         // get a random number less than 1
         let randNum = Math.random(1);
-        // console.log("randNum",randNum);
         let newNum = randNum > 0.5 ? 2 : 4;
         gameboard[randomSquare.x][randomSquare.y] = newNum;
         randomInsert = "gameboard[" + randomSquare.x + "][" + randomSquare.y + "]";
-        // console.log("Random insert: ", randomInsert)
-
-
 
         // This section updates the board view ---------
-
         // Populate the cell
         let x = randomSquare.x;
         let y = randomSquare.y;
         let targetCell = x.toString() + y.toString();
-        // console.table("random: gameboard[" + randomSquare.x + "][" + randomSquare.y + "]");
-
-        // This is what makes the number visible on the grid
-        // $(document).ready(function(){
-        //   $('#'+targetCell).text(newNum);
-        // });
-        displayGameboard()
-        // displayTextMatrix();
+        let bgColor = returnCellColor(newNum);
+        
+        // Add tile with animation - use class selector instead of ID
+        let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
+        let divClass = divboard[x][y];
+        let cellDiv = $('.'+divClass);
+        cellDiv.text(newNum).css("background-color", bgColor);
+        cellDiv.addClass('tile-new');
+        // Remove animation class after animation completes
+        setTimeout(function() {
+            cellDiv.removeClass('tile-new');
+        }, 200);
         // ---------------------------------------------
 
     }
-    // console.log("gameboard", gameboard.toString());
     console.log("How many open squares?", opensquares.length-1)
     // action = 0;
-    // console.table(gameboard);
+    console.table(gameboard);
 }
 
 /**
@@ -670,7 +666,7 @@ function sortColumnUp(column,col) {
     // let sc = column;          // scratch column
     let nc = [0,0,0,0];          // new (updated) column
 
-    // oc = [ 0, 2, 2, 2 ] ends up giving me [ 4, 2, 0, 2 ] after 3 iterations
+    // oc = [ 0, 2, 2, 2 ] ends up giving me [ 4, 2, 0, 2 ]
     // oc = [ 2, 2, 2, 2 ];
 
     // console.log("oc", oc);
