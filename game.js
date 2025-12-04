@@ -123,15 +123,15 @@ function rowTransform(row) {
     // ------------------------------
     if(row.length === 3) {
         // Step 1 - Combines (process from right to left, closest to destination first)
-        // Combine the first two numbers first (they're closest to destination after reversal)
-        if(row[0] === row[1]) {
-            row[1] = row[1] * 2;  // Put doubled value at position 1 (right side)
-            row.splice(0, 1);      // Remove position 0 (left tile disappears)
+        // Combine the last two numbers, if possible
+        if(row[1] === row[2]) {
+            row[2] = row[2] * 2;
+            row.splice(1, 1); // Remove position 1
         }
-        // Combine the last two numbers, if possible (only if first two didn't combine)
-        else if(row[1] === row[2]) {
-            row[2] = row[2] * 2;  // Put doubled value at position 2 (right side)
-            row.splice(1, 1);      // Remove position 1 (left tile disappears)
+        // Combine the first two numbers, if possible (only if last two didn't combine)
+        else if(row[0] === row[1]) {
+            row[1] = row[1] * 2;
+            row.splice(0, 1); // Remove position 0
         }
 
         // Step 2 - Pad zeros
