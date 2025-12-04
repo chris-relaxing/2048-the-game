@@ -122,32 +122,27 @@ function rowTransform(row) {
     }
     // ------------------------------
     if(row.length === 3) {
-        // console.log("This is the length===3 case..BEFORE", row);
-        // Step 1 - Combines
-        // Combine the last two numbers, if possible
-        if(row[1] === row[2]) {
-            row[1] = row[2] *2;
-            row.pop();
+        // Step 1 - Combines (process from right to left, closest to destination first)
+        // Combine the first two numbers first (they're closest to destination after reversal)
+        if(row[0] === row[1]) {
+            row[1] = row[1] * 2;  // Put doubled value at position 1 (right side)
+            row.splice(0, 1);      // Remove position 0 (left tile disappears)
         }
-        // Combine the first two numbers, if possible
-        else if(row[0] === row[1]) {
-            row[1] = row[1] *2;
-            row[0] = 0;
+        // Combine the last two numbers, if possible (only if first two didn't combine)
+        else if(row[1] === row[2]) {
+            row[2] = row[2] * 2;  // Put doubled value at position 2 (right side)
+            row.splice(1, 1);      // Remove position 1 (left tile disappears)
         }
-        // console.log("This is the target case..AFTER", row);
 
         // Step 2 - Pad zeros
         row = padZeros(row);
         console.log(originalRow, "row after Step 2: ", row);
-
     }
     // ------------------------------
     if(row.length === 2) {
-        // console.log("This is the length===2 case..BEFORE", row);
         if(row[0] === row[1]) {
-            row[0] = row[1] *2;
-            row.pop();
-        // console.log("This is the target case..AFTER", row);
+            row[1] = row[1] * 2;  // Put doubled value at position 1 (right side)
+            row.splice(0, 1);      // Remove position 0 (left tile disappears)
         }
         // Step 2 - Pad zeros
         row = padZeros(row);
@@ -237,91 +232,44 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
 
 /**
  * findTileDestination - Find where a tile ends up after a move
- * This function simulates the movement for a single tile to find its final position
+ * This function finds where a specific tile from beforeBoard ends up in afterBoard
  */
 function findTileDestination(beforeBoard, afterBoard, row, col, value, direction) {
-    let newRow = row;
-    let newCol = col;
+    // Strategy: Search from the tile's original position in the direction of movement
+    // Stop at the first matching value we find
     
     if (direction === 'up') {
-        // Move up: scan upward from current position
-        for (let r = row - 1; r >= 0; r--) {
-            if (beforeBoard[r][col] === 0) {
-                // Empty space, keep moving
-                newRow = r;
-            } else if (beforeBoard[r][col] === value) {
-                // Found a matching tile - check if they combine in the afterBoard
-                if (afterBoard[r][col] === value * 2) {
-                    // Yes, they combine at this position
-                    newRow = r;
-                }
-                // Either way, stop here - can't move past another tile
-                break;
-            } else {
-                // Hit a different value tile, stop before it
-                break;
+        // Search upward from original position
+        for (let r = row; r >= 0; r--) {
+            if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
+                return { row: r, col: col };
             }
         }
     } else if (direction === 'down') {
-        // Move down: scan downward from current position
-        for (let r = row + 1; r <= 3; r++) {
-            if (beforeBoard[r][col] === 0) {
-                // Empty space, keep moving
-                newRow = r;
-            } else if (beforeBoard[r][col] === value) {
-                // Found a matching tile - check if they combine in the afterBoard
-                if (afterBoard[r][col] === value * 2) {
-                    // Yes, they combine at this position
-                    newRow = r;
-                }
-                // Either way, stop here - can't move past another tile
-                break;
-            } else {
-                // Hit a different value tile, stop before it
-                break;
+        // Search downward from original position
+        for (let r = row; r <= 3; r++) {
+            if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
+                return { row: r, col: col };
             }
         }
     } else if (direction === 'left') {
-        // Move left: scan leftward from current position
-        for (let c = col - 1; c >= 0; c--) {
-            if (beforeBoard[row][c] === 0) {
-                // Empty space, keep moving
-                newCol = c;
-            } else if (beforeBoard[row][c] === value) {
-                // Found a matching tile - check if they combine in the afterBoard
-                if (afterBoard[row][c] === value * 2) {
-                    // Yes, they combine at this position
-                    newCol = c;
-                }
-                // Either way, stop here - can't move past another tile
-                break;
-            } else {
-                // Hit a different value tile, stop before it
-                break;
+        // Search leftward from original position
+        for (let c = col; c >= 0; c--) {
+            if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
+                return { row: row, col: c };
             }
         }
     } else if (direction === 'right') {
-        // Move right: scan rightward from current position
-        for (let c = col + 1; c <= 3; c++) {
-            if (beforeBoard[row][c] === 0) {
-                // Empty space, keep moving
-                newCol = c;
-            } else if (beforeBoard[row][c] === value) {
-                // Found a matching tile - check if they combine in the afterBoard
-                if (afterBoard[row][c] === value * 2) {
-                    // Yes, they combine at this position
-                    newCol = c;
-                }
-                // Either way, stop here - can't move past another tile
-                break;
-            } else {
-                // Hit a different value tile, stop before it
-                break;
+        // Search rightward from original position
+        for (let c = col; c <= 3; c++) {
+            if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
+                return { row: row, col: c };
             }
         }
     }
     
-    return { row: newRow, col: newCol };
+    // Fallback: tile didn't move
+    return { row: row, col: col };
 }
 
 function upArrow() {
@@ -583,17 +531,145 @@ function loadHistoryState(index, animate = false) {
 }
 
 /**
+ * replayMoveWithCurrentLogic - Re-execute the current move with current game logic
+ * Useful for testing bug fixes against historical game states
+ */
+function replayMoveWithCurrentLogic() {
+    if (!isReplaying || currentHistoryIndex <= 0) {
+        console.log("Must be in replay mode and not at the start");
+        return;
+    }
+    
+    const currentMove = gameHistory[currentHistoryIndex].move;
+    const previousState = gameHistory[currentHistoryIndex - 1];
+    
+    console.log(`🔄 Re-executing move: ${currentMove} with current logic`);
+    console.log("Original BEFORE state:", previousState.board);
+    console.log("Original AFTER state:", gameHistory[currentHistoryIndex].board);
+    
+    // Set gameboard to the previous state
+    gameboard = deepCopy(previousState.board);
+    
+    // Temporarily disable history recording and random tile addition
+    const originalHistoryLength = gameHistory.length;
+    const oldAction = action;
+    action = 0; // Disable random tile addition
+    
+    // Declare variables outside switch to avoid redeclaration issues
+    let c0, c1, c2, c3, columns;
+    
+    // Execute the move with current logic
+    switch(currentMove) {
+        case 'up':
+            c0 = [gameboard[3][0], gameboard[2][0], gameboard[1][0], gameboard[0][0]];
+            c1 = [gameboard[3][1], gameboard[2][1], gameboard[1][1], gameboard[0][1]];
+            c2 = [gameboard[3][2], gameboard[2][2], gameboard[1][2], gameboard[0][2]];
+            c3 = [gameboard[3][3], gameboard[2][3], gameboard[1][3], gameboard[0][3]];
+            columns = [c0, c1, c2, c3];
+            for(line of columns) { rowTransform(line); }
+            gameboard[3] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
+            gameboard[2] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
+            gameboard[1] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
+            gameboard[0] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+            break;
+        case 'down':
+            c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
+            c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
+            c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
+            c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
+            columns = [c0, c1, c2, c3];
+            for(line of columns) { rowTransform(line); }
+            gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
+            gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
+            gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
+            gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+            break;
+        case 'left':
+            c0 = gameboard[0].slice().reverse();
+            c1 = gameboard[1].slice().reverse();
+            c2 = gameboard[2].slice().reverse();
+            c3 = gameboard[3].slice().reverse();
+            columns = [c0, c1, c2, c3];
+            for(line of columns) { rowTransform(line); }
+            gameboard[0] = columns[0].reverse();
+            gameboard[1] = columns[1].reverse();
+            gameboard[2] = columns[2].reverse();
+            gameboard[3] = columns[3].reverse();
+            break;
+        case 'right':
+            columns = [gameboard[0].slice(), gameboard[1].slice(), gameboard[2].slice(), gameboard[3].slice()];
+            for(line of columns) { rowTransform(line); }
+            gameboard[0] = columns[0];
+            gameboard[1] = columns[1];
+            gameboard[2] = columns[2];
+            gameboard[3] = columns[3];
+            break;
+    }
+    
+    // Remove any history entries that were accidentally added
+    gameHistory.length = originalHistoryLength;
+    
+    action = oldAction; // Restore action flag
+    
+    const gameboardAfter = deepCopy(gameboard);
+    
+    console.log("NEW AFTER state (current logic):", gameboardAfter);
+    displayTextMatrix();
+    
+    // Compare results
+    let isDifferent = false;
+    let differences = [];
+    for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+            if (gameHistory[currentHistoryIndex].board[r][c] !== gameboardAfter[r][c]) {
+                isDifferent = true;
+                differences.push(`Position (${r},${c}): Original=${gameHistory[currentHistoryIndex].board[r][c]}, New=${gameboardAfter[r][c]}`);
+            }
+        }
+    }
+    
+    if (isDifferent) {
+        console.log("⚠️ DIFFERENCE DETECTED! Current logic produces different result.");
+        console.log("Differences:", differences);
+        
+        // Keep the NEW result displayed so user can see it
+        displayGameboard();
+        
+        alert(`Result differs! The NEW result is now displayed on the board.\n\n${differences.length} difference(s) found.\nCheck console for details.\n\nClick OK to see the new result, or use Previous/Next to restore old view.`);
+    } else {
+        console.log("✅ Results match! Current logic produces same result as original.");
+        
+        // Restore the original history state for display
+        loadHistoryState(currentHistoryIndex, false);
+        
+        alert("Results match! Current logic produces the same result.");
+    }
+}
+
+/**
  * updateReplayStatus - Update the replay status display
  */
 function updateReplayStatus() {
     const statusEl = document.getElementById('replayStatus');
+    const testBtn = document.getElementById('replayCurrentLogicBtn');
+    
     if (statusEl) {
         if (isReplaying) {
             statusEl.textContent = `📼 Replay Mode: Step ${currentHistoryIndex + 1}/${gameHistory.length} - ${gameHistory[currentHistoryIndex].move}`;
             statusEl.style.color = '#d32f2f';
+            
+            // Show test button only if not at start
+            if (testBtn && currentHistoryIndex > 0) {
+                testBtn.style.display = 'inline-block';
+            }
         } else {
             statusEl.textContent = '🟢 Live Game';
             statusEl.style.color = '#388e3c';
+            
+            // Hide test button when not in replay mode
+            if (testBtn) {
+                testBtn.style.display = 'none';
+            }
         }
     }
 }
