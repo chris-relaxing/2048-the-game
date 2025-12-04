@@ -2,6 +2,10 @@ let gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
 let divLookup = [['a','e','i','m'], ['b','f','j','n'], ['c','g','k','o'], ['d','h','l','p']]
 let action = 1;
 let gameboardBefore = ""; // Make this global
+// Replay system
+let gameHistory = [];
+let currentHistoryIndex = -1;
+let isReplaying = false;
 
 // TODO: Algorithm is failing at this point: Middle numbers won't combine. 
 // For example [8, 4, 4, 2] or [4, 8, 8, 2]
@@ -9,40 +13,50 @@ let gameboardBefore = ""; // Make this global
 // Add first two numbers to the board
 addRandom();
 addRandom();
+// Record initial state
+recordGameState('init');
 
 document.onkeydown = function (e) {
+  // Replay controls
+  if (e.key === 'PageUp') {
+      replayBackward();
+      return;
+  }
+  if (e.key === 'PageDown') {
+      replayForward();
+      return;
+  }
+  if (e.key === 'Home') {
+      jumpToStart();
+      return;
+  }
+  if (e.key === 'End') {
+      jumpToEnd();
+      return;
+  }
+  
+  // Don't allow moves during replay
+  if (isReplaying) {
+      console.log("Cannot make moves during replay. Press End to return to live game.");
+      return;
+  }
+  
   switch (e.key) {
       case 'ArrowUp':
-          // up arrow
-          // console.table("Up arrow");
-          console.log("Up arrow ---------------------------------------------------------------------------");
-
           upArrow();
-          // Removed displayGameboard() - it's now called in the animation callback
-          // if (action) { addRandom(); } - moved to callback
-
+          console.table("Up arrow");
           break;
       case 'ArrowDown':
-          // down arrow
-          console.table("Down arrow");
-
           downArrow();
-          // Removed displayGameboard() - it's now called in the animation callback
-          // if (action) { addRandom(); } - moved to callback
+          console.table("Down arrow");
           break;
       case 'ArrowLeft':
-          // left arrow
-          console.table("Left arrow");
           leftArrow();
-          // Removed displayGameboard() - it's now called in the animation callback
-          // if (action) { addRandom(); } - moved to callback
+          console.table("Left arrow");
           break;
       case 'ArrowRight':
-          // right arrow
-          console.table("Right arrow");
           rightArrow();
-          // Removed displayGameboard() - it's now called in the animation callback
-          // if (action) { addRandom(); } - moved to callback
+          console.table("Right arrow");
           break;
   }
 };
@@ -57,7 +71,6 @@ function removeZeros(arr) {
             i--;
         }
     }
-    // console.log("Array without zeros being returned: ", arr);
     return arr;
 }
 
@@ -68,11 +81,10 @@ function removeZeros(arr) {
 function padZeros(arr) {
     // Determine current length of row to pad zeros
     let short = 4 - arr.length;
-    // console.log("The current row is short by: ", short);
     for(x = 0; x < short; x++) {
         arr.unshift(0);
     }
-return arr;
+    return arr;
 }
 
 
@@ -87,25 +99,21 @@ function rowTransform(row) {
     // If there are no zeroes in the row, then we could have more than one combine that needs to happen
     // ------------------------------
     if(row.length === 4) {
-        // console.log("This is the length===4 case..BEFORE", row);
-
-        // Step 1 - Combines
+        // Step 1 - Combines (process from right to left, closest to destination first)
         // Combine the last two numbers, if possible
         if(row[2] === row[3]) {
-            row[2] = row[3] *2;
-            row.pop();
+            row[3] = row[3] * 2;
+            row.splice(2, 1); // Remove position 2
         }
-
         // Combine the middle two numbers, if possible (only if last two didn't combine)
-        if(row.length >= 3 && row[1] === row[2]) {
-            row[1] = row[2] *2;
-            row.splice(2, 1); // Remove the combined tile
+        else if(row.length >= 3 && row[1] === row[2]) {
+            row[2] = row[2] * 2;
+            row.splice(1, 1); // Remove position 1
         }
-
-        // Combine the first two numbers, if possible (only if middle two didn't combine)
-        if(row.length >= 2 && row[0] === row[1]) {
-            row[0] = row[1] *2;
-            row.splice(1, 1); // Remove the combined tile
+        // Combine the first two numbers, if possible (only if middle two didn't combine)  
+        else if(row.length >= 2 && row[0] === row[1]) {
+            row[1] = row[1] * 2;
+            row.splice(0, 1); // Remove position 0
         }
 
         // Step 2 - Pad zeros
@@ -360,7 +368,10 @@ function upArrow() {
     // Animate the movements, then display and add new tile
     animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'up', function() {
         displayGameboard();
-        if (action) { addRandom(); }
+        if (action) { 
+            addRandom(); 
+            recordGameState('up');
+        }
     });
 }
 
@@ -402,7 +413,10 @@ function downArrow(){
     // Animate the movements, then display and add new tile
     animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'down', function() {
         displayGameboard();
-        if (action) { addRandom(); }
+        if (action) { 
+            addRandom(); 
+            recordGameState('down');
+        }
     });
 }
 
@@ -414,27 +428,14 @@ function rightArrow(){
 
     displayTextMatrix();
 
-    // Step 1 - Load the column into an array
-    // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
-    // let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
-    // let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
-    // let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
-    // let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
-
     let columns = gameboard;
     console.log("columns", columns);
-
 
     for(line of columns){
         console.log("---- Line to be tested: ", line);
         rowTransform(line);
     }
 
-    // Update gameboard with new column
-    // gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-    // gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-    // gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-    // gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
     displayTextMatrix()
 
     let gameboardArrayAfter = deepCopy(gameboard);
@@ -444,7 +445,10 @@ function rightArrow(){
     // Animate the movements, then display and add new tile
     animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'right', function() {
         displayGameboard();
-        if (action) { addRandom(); }
+        if (action) { 
+            addRandom(); 
+            recordGameState('right');
+        }
     });
 }
 
@@ -489,8 +493,88 @@ function leftArrow(){
     // Animate the movements, then display and add new tile
     animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'left', function() {
         displayGameboard();
-        if (action) { addRandom(); }
+        if (action) { 
+            addRandom(); 
+            recordGameState('left');
+        }
     });
+}
+
+/**
+ * recordGameState - Record the current game state to history
+ */
+function recordGameState(move) {
+    const state = {
+        board: deepCopy(gameboard),
+        move: move,
+        timestamp: Date.now()
+    };
+    gameHistory.push(state);
+    currentHistoryIndex = gameHistory.length - 1;
+    console.log(`📼 Recorded state #${currentHistoryIndex}: ${move}`, state.board);
+}
+
+/**
+ * replayBackward - Go back one move in history
+ */
+function replayBackward() {
+    if (currentHistoryIndex > 0) {
+        currentHistoryIndex--;
+        loadHistoryState(currentHistoryIndex);
+        isReplaying = true;
+        console.log(`⏮️ Replay: Step ${currentHistoryIndex}/${gameHistory.length - 1} - Move: ${gameHistory[currentHistoryIndex].move}`);
+    } else {
+        console.log("Already at the beginning of history");
+    }
+}
+
+/**
+ * replayForward - Go forward one move in history
+ */
+function replayForward() {
+    if (currentHistoryIndex < gameHistory.length - 1) {
+        currentHistoryIndex++;
+        loadHistoryState(currentHistoryIndex);
+        isReplaying = true;
+        console.log(`⏭️ Replay: Step ${currentHistoryIndex}/${gameHistory.length - 1} - Move: ${gameHistory[currentHistoryIndex].move}`);
+    } else {
+        console.log("At the end of history");
+        isReplaying = false;
+    }
+}
+
+/**
+ * jumpToStart - Jump to the first state
+ */
+function jumpToStart() {
+    if (gameHistory.length > 0) {
+        currentHistoryIndex = 0;
+        loadHistoryState(currentHistoryIndex);
+        isReplaying = true;
+        console.log(`⏮️⏮️ Jumped to start - Move: ${gameHistory[currentHistoryIndex].move}`);
+    }
+}
+
+/**
+ * jumpToEnd - Jump to the latest state (exit replay mode)
+ */
+function jumpToEnd() {
+    if (gameHistory.length > 0) {
+        currentHistoryIndex = gameHistory.length - 1;
+        loadHistoryState(currentHistoryIndex);
+        isReplaying = false;
+        console.log(`⏭️⏭️ Jumped to end - Back to live game`);
+    }
+}
+
+/**
+ * loadHistoryState - Load a specific state from history
+ */
+function loadHistoryState(index) {
+    const state = gameHistory[index];
+    gameboard = deepCopy(state.board);
+    displayGameboard();
+    displayTextMatrix();
 }
 
 /**
@@ -537,11 +621,6 @@ function addRandom(){
             }
         }
     }
-    // console.log("opensquares contains:", opensquares.length);
-    // for(let b = 0; b < opensquares.length; b++){
-    //   console.log(opensquares[b]);
-    // }
-    // console.log("opensquares", opensquares.toString());
 
     if(opensquares.length > 0) {
         // Get a randomSquare from the opensquares dictionary
@@ -581,10 +660,21 @@ function addRandom(){
  * returnCellColor - Utility function for CSS game coloring
  */
 function returnCellColor(value) {
-    let cellColors = ['#ccc', 'white', '#FFFDE7', '#FF9E80', '#FF8A65', '#FF5722', '#FFC107', '#C0CA33'];
-    let cellValues = [0, 2, 4, 8, 16, 32, 64, 128];
-    let bgColor = cellColors[cellValues.indexOf(value)];
-    return bgColor;
+    const cellColorMap = {
+        0: '#ccc',
+        2: 'white',
+        4: '#FFFDE7',
+        8: '#FF9E80',
+        16: '#FF8A65',
+        32: '#FF5722',
+        64: '#FFC107',
+        128: '#C0CA33',
+        256: '#464913ff',
+        512: '#232004ff',
+        1024: '#4596cbff',
+        2048: '#222be3ff'
+    };
+    return cellColorMap[value] || '#ccc'; // Default to #ccc if value not found
 }
 
 
