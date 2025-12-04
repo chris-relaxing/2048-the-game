@@ -82,10 +82,47 @@ h1 {
 .replay-controls {
     text-align: center;
     margin: 20px auto;
-    padding: 15px;
-    background-color: #f0f0f0;
+    padding: 20px;
+    background-color: #f9f9f9;
     border-radius: 8px;
-    max-width: 600px;
+    max-width: 650px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.replay-controls p {
+    margin: 10px 0;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.control-buttons button {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-buttons button:hover {
+    background-color: #e8e8e8;
+    border-color: #999;
+}
+
+.control-buttons button:active {
+    transform: scale(0.95);
+}
+
+.replay-status {
+    font-weight: bold;
+    color: #333;
+    margin-top: 10px;
 }
 
 .replay-controls kbd {

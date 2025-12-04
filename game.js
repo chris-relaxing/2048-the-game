@@ -168,7 +168,7 @@ function rowTransform(row) {
  */
 function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
     let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
-    let animationDuration = 500;
+    let animationDuration = 1000;
     let animationsCompleted = 0;
     let totalAnimations = 0;
 
@@ -249,12 +249,16 @@ function findTileDestination(beforeBoard, afterBoard, row, col, value, direction
             if (beforeBoard[r][col] === 0) {
                 // Empty space, keep moving
                 newRow = r;
-            } else if (beforeBoard[r][col] === value && afterBoard[r][col] === value * 2) {
-                // This tile will combine with the one we found
-                newRow = r;
+            } else if (beforeBoard[r][col] === value) {
+                // Found a matching tile - check if they combine in the afterBoard
+                if (afterBoard[r][col] === value * 2) {
+                    // Yes, they combine at this position
+                    newRow = r;
+                }
+                // Either way, stop here - can't move past another tile
                 break;
             } else {
-                // Hit a different tile, stop before it
+                // Hit a different value tile, stop before it
                 break;
             }
         }
@@ -264,12 +268,16 @@ function findTileDestination(beforeBoard, afterBoard, row, col, value, direction
             if (beforeBoard[r][col] === 0) {
                 // Empty space, keep moving
                 newRow = r;
-            } else if (beforeBoard[r][col] === value && afterBoard[r][col] === value * 2) {
-                // This tile will combine with the one we found
-                newRow = r;
+            } else if (beforeBoard[r][col] === value) {
+                // Found a matching tile - check if they combine in the afterBoard
+                if (afterBoard[r][col] === value * 2) {
+                    // Yes, they combine at this position
+                    newRow = r;
+                }
+                // Either way, stop here - can't move past another tile
                 break;
             } else {
-                // Hit a different tile, stop before it
+                // Hit a different value tile, stop before it
                 break;
             }
         }
@@ -279,12 +287,16 @@ function findTileDestination(beforeBoard, afterBoard, row, col, value, direction
             if (beforeBoard[row][c] === 0) {
                 // Empty space, keep moving
                 newCol = c;
-            } else if (beforeBoard[row][c] === value && afterBoard[row][c] === value * 2) {
-                // This tile will combine with the one we found
-                newCol = c;
+            } else if (beforeBoard[row][c] === value) {
+                // Found a matching tile - check if they combine in the afterBoard
+                if (afterBoard[row][c] === value * 2) {
+                    // Yes, they combine at this position
+                    newCol = c;
+                }
+                // Either way, stop here - can't move past another tile
                 break;
             } else {
-                // Hit a different tile, stop before it
+                // Hit a different value tile, stop before it
                 break;
             }
         }
@@ -294,37 +306,17 @@ function findTileDestination(beforeBoard, afterBoard, row, col, value, direction
             if (beforeBoard[row][c] === 0) {
                 // Empty space, keep moving
                 newCol = c;
-            } else if (beforeBoard[row][c] === value && afterBoard[row][c] === value * 2) {
-                // This tile will combine with the one we found
-                newCol = c;
+            } else if (beforeBoard[row][c] === value) {
+                // Found a matching tile - check if they combine in the afterBoard
+                if (afterBoard[row][c] === value * 2) {
+                    // Yes, they combine at this position
+                    newCol = c;
+                }
+                // Either way, stop here - can't move past another tile
                 break;
             } else {
-                // Hit a different tile, stop before it
+                // Hit a different value tile, stop before it
                 break;
-            }
-        }
-    }
-    
-    // Double-check: if we didn't find the value in afterBoard at our calculated position,
-    // search the entire row/column in afterBoard to find where it actually ended up
-    if (direction === 'up' || direction === 'down') {
-        if (afterBoard[newRow][col] !== value && afterBoard[newRow][col] !== value * 2) {
-            // Value not at expected position, search the column in afterBoard
-            for (let r = 0; r < 4; r++) {
-                if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
-                    newRow = r;
-                    break;
-                }
-            }
-        }
-    } else {
-        if (afterBoard[row][newCol] !== value && afterBoard[row][newCol] !== value * 2) {
-            // Value not at expected position, search the row in afterBoard
-            for (let c = 0; c < 4; c++) {
-                if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
-                    newCol = c;
-                    break;
-                }
             }
         }
     }
@@ -520,8 +512,9 @@ function recordGameState(move) {
 function replayBackward() {
     if (currentHistoryIndex > 0) {
         currentHistoryIndex--;
-        loadHistoryState(currentHistoryIndex);
+        loadHistoryState(currentHistoryIndex, false); // No animation when going back
         isReplaying = true;
+        updateReplayStatus();
         console.log(`⏮️ Replay: Step ${currentHistoryIndex}/${gameHistory.length - 1} - Move: ${gameHistory[currentHistoryIndex].move}`);
     } else {
         console.log("Already at the beginning of history");
@@ -533,13 +526,23 @@ function replayBackward() {
  */
 function replayForward() {
     if (currentHistoryIndex < gameHistory.length - 1) {
+        const previousIndex = currentHistoryIndex;
         currentHistoryIndex++;
-        loadHistoryState(currentHistoryIndex);
+        const currentState = gameHistory[currentHistoryIndex];
+        const previousState = gameHistory[previousIndex];
+        
+        // Animate the transition from previous to current
+        animateTileMovements(previousState.board, currentState.board, currentState.move, function() {
+            loadHistoryState(currentHistoryIndex, false);
+        });
+        
         isReplaying = true;
+        updateReplayStatus();
         console.log(`⏭️ Replay: Step ${currentHistoryIndex}/${gameHistory.length - 1} - Move: ${gameHistory[currentHistoryIndex].move}`);
     } else {
         console.log("At the end of history");
         isReplaying = false;
+        updateReplayStatus();
     }
 }
 
@@ -549,8 +552,9 @@ function replayForward() {
 function jumpToStart() {
     if (gameHistory.length > 0) {
         currentHistoryIndex = 0;
-        loadHistoryState(currentHistoryIndex);
+        loadHistoryState(currentHistoryIndex, false);
         isReplaying = true;
+        updateReplayStatus();
         console.log(`⏮️⏮️ Jumped to start - Move: ${gameHistory[currentHistoryIndex].move}`);
     }
 }
@@ -561,8 +565,9 @@ function jumpToStart() {
 function jumpToEnd() {
     if (gameHistory.length > 0) {
         currentHistoryIndex = gameHistory.length - 1;
-        loadHistoryState(currentHistoryIndex);
+        loadHistoryState(currentHistoryIndex, false);
         isReplaying = false;
+        updateReplayStatus();
         console.log(`⏭️⏭️ Jumped to end - Back to live game`);
     }
 }
@@ -570,11 +575,27 @@ function jumpToEnd() {
 /**
  * loadHistoryState - Load a specific state from history
  */
-function loadHistoryState(index) {
+function loadHistoryState(index, animate = false) {
     const state = gameHistory[index];
     gameboard = deepCopy(state.board);
     displayGameboard();
     displayTextMatrix();
+}
+
+/**
+ * updateReplayStatus - Update the replay status display
+ */
+function updateReplayStatus() {
+    const statusEl = document.getElementById('replayStatus');
+    if (statusEl) {
+        if (isReplaying) {
+            statusEl.textContent = `📼 Replay Mode: Step ${currentHistoryIndex + 1}/${gameHistory.length} - ${gameHistory[currentHistoryIndex].move}`;
+            statusEl.style.color = '#d32f2f';
+        } else {
+            statusEl.textContent = '🟢 Live Game';
+            statusEl.style.color = '#388e3c';
+        }
+    }
 }
 
 /**
@@ -637,7 +658,7 @@ function addRandom(){
         let y = randomSquare.y;
         let targetCell = x.toString() + y.toString();
         let bgColor = returnCellColor(newNum);
-        
+
         // Add tile with animation - use class selector instead of ID
         let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
         let divClass = divboard[x][y];
@@ -652,8 +673,7 @@ function addRandom(){
 
     }
     console.log("How many open squares?", opensquares.length-1)
-    // action = 0;
-    console.table(gameboard);
+
 }
 
 /**
@@ -707,6 +727,76 @@ function displayGameboard() {
         }
     }
 }
+
+/**
+ * exportGameHistory - Export game history to a JSON file
+ */
+function exportGameHistory() {
+    const data = JSON.stringify({
+        history: gameHistory,
+        currentIndex: currentHistoryIndex,
+        exportDate: new Date().toISOString()
+    }, null, 2);
+
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `2048-game-history-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log('📥 Game history exported:', gameHistory.length, 'states');
+}
+
+/**
+ * importGameHistory - Import game history from a JSON file
+ */
+function importGameHistory() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const data = JSON.parse(event.target.result);
+                gameHistory = data.history;
+                currentHistoryIndex = data.currentIndex;
+
+                // Load the current state
+                loadHistoryState(currentHistoryIndex, false);
+                isReplaying = true;
+                updateReplayStatus();
+
+                console.log('📤 Game history imported:', gameHistory.length, 'states');
+                console.log('Loaded state from:', new Date(data.exportDate).toLocaleString());
+            } catch (err) {
+                console.error('Failed to import game history:', err);
+                alert('Failed to import game history. Please check the file format.');
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    input.click();
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

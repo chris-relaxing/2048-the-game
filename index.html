@@ -10,12 +10,17 @@
 
 <div class="replay-controls">
     <p><strong>Replay Controls:</strong></p>
-    <p>
-        <kbd>Home</kbd> Jump to Start | 
-        <kbd>PageUp</kbd> Previous Move | 
-        <kbd>PageDown</kbd> Next Move | 
-        <kbd>End</kbd> Return to Live Game
-    </p>
+    <div class="control-buttons">
+        <button onclick="jumpToStart()">⏮️ Start (Home)</button>
+        <button onclick="replayBackward()">⏪ Previous (PgUp)</button>
+        <button onclick="replayForward()">⏩ Next (PgDn)</button>
+        <button onclick="jumpToEnd()">⏭️ Live (End)</button>
+    </div>
+    <div class="control-buttons">
+        <button onclick="exportGameHistory()">💾 Export History</button>
+        <button onclick="importGameHistory()">📥 Import History</button>
+    </div>
+    <p class="replay-status" id="replayStatus">Live Game</p>
 </div>
 
 <div class="container">
