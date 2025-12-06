@@ -79,6 +79,16 @@ h1 {
     animation: tile-appear 0.2s ease-in-out;
 }
 
+.tile-merged {
+    animation: merge-pop 200ms ease-out;
+}
+
+@keyframes merge-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
 .replay-controls {
     text-align: left;
     margin: 20px 100px;
