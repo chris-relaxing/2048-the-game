@@ -7,7 +7,7 @@ let gameHistory = [];
 let currentHistoryIndex = -1;
 let isReplaying = false;
 
-// TODO: Algorithm is failing at this point: Middle numbers won't combine. 
+// TODO: Algorithm is failing at this point: Middle numbers won't combine.
 // For example [8, 4, 4, 2] or [4, 8, 8, 2]
 
 // Add first two numbers to the board
@@ -34,13 +34,13 @@ document.onkeydown = function (e) {
       jumpToEnd();
       return;
   }
-  
+
   // Don't allow moves during replay
   if (isReplaying) {
       console.log("Cannot make moves during replay. Press End to return to live game.");
       return;
   }
-  
+
   switch (e.key) {
       case 'ArrowUp':
           upArrow();
@@ -65,13 +65,14 @@ document.onkeydown = function (e) {
 * removeZeros - This function returns a given array with all zeros removed.
 */
 function removeZeros(arr) {
+    // Create new array instead of mutating to avoid issues
+    let result = [];
     for(var i=0; i < arr.length; i++) {
-        if(arr[i] === 0) {
-            arr.splice(i, 1);
-            i--;
+        if(arr[i] !== 0 && arr[i] !== undefined && arr[i] !== null) {
+            result.push(arr[i]);
         }
     }
-    return arr;
+    return result;
 }
 
 /**
@@ -79,6 +80,8 @@ function removeZeros(arr) {
 *   pad zeros on the left side until the length of the array is 4
 */
 function padZeros(arr) {
+    // Ensure we're working with clean values
+    arr = arr.filter(v => v !== undefined && v !== null);
     // Determine current length of row to pad zeros
     let short = 4 - arr.length;
     for(x = 0; x < short; x++) {
@@ -90,72 +93,278 @@ function padZeros(arr) {
 
 function rowTransform(row) {
     const originalRow = [...row];
+    let animations = []; // Track animations in terms of array indices (0-3)
 
     // Before the below, let's remove all zeros, then we will see how many digits remain
     row = removeZeros(row);
 
+    // Track which original positions have tiles
+    let tilePositions = [];
+    for (let i = 0; i < originalRow.length; i++) {
+        if (originalRow[i] !== 0 && originalRow[i] !== undefined && originalRow[i] !== null) {
+            tilePositions.push({
+                originalPos: i,
+                value: originalRow[i],
+                compactIndex: tilePositions.length,  // position in compacted array before any merges
+                mergedThisTurn: false  // Track if this tile was created from a merge this turn
+            });
+        }
+    }
+
     // Case of 4 numbers in a row with no zeros
-    // Pre-process the cases where there is more than one potential combine. i.e. [4,4,4,4]
-    // If there are no zeroes in the row, then we could have more than one combine that needs to happen
     // ------------------------------
     if(row.length === 4) {
-        // Step 1 - Combines (process from right to left, closest to destination first)
+        // Check merges from RIGHT to LEFT (for right-aligned movement)
+
         // Combine the last two numbers, if possible
-        if(row[2] === row[3]) {
-            row[3] = row[3] * 2;
-            row.splice(2, 1); // Remove position 2
+        if(row[2] === row[3] && !tilePositions[2].mergedThisTurn && !tilePositions[3].mergedThisTurn) {
+            animations.push({
+                from: tilePositions[2].originalPos,
+                toTileIndex: 3,  // Merging into tile at original position 3
+                value: row[2],
+                merges: true
+            });
+            row[3] = row[2] * 2;
+            tilePositions[3].value = row[3];
+            tilePositions[3].mergedThisTurn = true;  // Mark as merged
+            row.splice(2, 1);
+            tilePositions.splice(2, 1);
         }
-        // Combine the middle two numbers, if possible (only if last two didn't combine)
-        else if(row.length >= 3 && row[1] === row[2]) {
-            row[2] = row[2] * 2;
-            row.splice(1, 1); // Remove position 1
+        // Combine the middle two numbers, if possible (after first merge, indices shift!)
+        if(row.length >= 3 && row[1] === row[2] && !tilePositions[1].mergedThisTurn && !tilePositions[2].mergedThisTurn) {
+            animations.push({
+                from: tilePositions[1].originalPos,
+                toTileIndex: tilePositions[2].originalPos,  // Merging into the tile at compact index 2
+                value: row[1],
+                merges: true
+            });
+            row[2] = row[1] * 2;
+            tilePositions[2].value = row[2];
+            tilePositions[2].mergedThisTurn = true;  // Mark as merged
+            row.splice(1, 1);
+            tilePositions.splice(1, 1);
         }
-        // Combine the first two numbers, if possible (only if middle two didn't combine)  
-        else if(row.length >= 2 && row[0] === row[1]) {
-            row[1] = row[1] * 2;
-            row.splice(0, 1); // Remove position 0
+        // Combine the first two numbers, if possible
+        if(row.length >= 2 && row[0] === row[1] && !tilePositions[0].mergedThisTurn && !tilePositions[1].mergedThisTurn) {
+            animations.push({
+                from: tilePositions[0].originalPos,
+                toTileIndex: tilePositions[1].originalPos,  // Merging into the tile at compact index 1
+                value: row[0],
+                merges: true
+            });
+            row[1] = row[0] * 2;
+            tilePositions[1].value = row[1];
+            tilePositions[1].mergedThisTurn = true;  // Mark as merged
+            row.splice(0, 1);
+            tilePositions.splice(0, 1);
         }
 
-        // Step 2 - Pad zeros
+        // NOW calculate final positions and update merge animations
+        let remainingLength = row.length;
+        let paddingOffset = 4 - remainingLength;
+
+        // Update merge animations with final grid positions
+        animations.forEach(anim => {
+            if (anim.merges) {
+                // Find which remaining tile has this original position
+                let tileIndex = tilePositions.findIndex(t => t.originalPos === anim.toTileIndex);
+                if (tileIndex !== -1) {
+                    anim.to = paddingOffset + tileIndex;
+                    delete anim.toTileIndex;
+                }
+            }
+        });
+
+        // Track non-merge movements
+        for (let i = 0; i < tilePositions.length; i++) {
+            let finalPos = paddingOffset + i;
+            if (tilePositions[i].originalPos !== finalPos) {
+                animations.push({
+                    from: tilePositions[i].originalPos,
+                    to: finalPos,
+                    value: tilePositions[i].value,
+                    merges: false
+                });
+            }
+        }
+
         row = padZeros(row);
-        console.log(originalRow, "row after Step 2: ", row);
+        console.log(originalRow, "row after transform: ", row);
     }
     // ------------------------------
     if(row.length === 3) {
-        // Step 1 - Combines (process from right to left, closest to destination first)
-        // Combine the last two numbers, if possible
         if(row[1] === row[2]) {
-            row[2] = row[2] * 2;
-            row.splice(1, 1); // Remove position 1
+            animations.push({
+                from: tilePositions[1].originalPos,
+                to: 3,
+                value: row[1],
+                merges: true
+            });
+            row[2] = row[1] * 2;
+            row.splice(1, 1);
+            tilePositions.splice(1, 1);
         }
-        // Combine the first two numbers, if possible (only if last two didn't combine)
         else if(row[0] === row[1]) {
-            row[1] = row[1] * 2;
-            row.splice(0, 1); // Remove position 0
+            let finalPos = 2;
+            animations.push({
+                from: tilePositions[0].originalPos,
+                to: finalPos,
+                value: row[0],
+                merges: true
+            });
+            row[1] = row[0] * 2;
+            row.splice(0, 1);
+            tilePositions.splice(0, 1);
         }
 
-        // Step 2 - Pad zeros
+        let remainingLength = row.length;
+        for (let i = 0; i < tilePositions.length; i++) {
+            let finalPos = (4 - remainingLength) + i;
+            if (tilePositions[i].originalPos !== finalPos) {
+                animations.push({
+                    from: tilePositions[i].originalPos,
+                    to: finalPos,
+                    value: tilePositions[i].value,
+                    merges: false
+                });
+            }
+        }
+
         row = padZeros(row);
-        console.log(originalRow, "row after Step 2: ", row);
+        console.log(originalRow, "row after transform: ", row);
     }
     // ------------------------------
     if(row.length === 2) {
         if(row[0] === row[1]) {
-            row[1] = row[1] * 2;  // Put doubled value at position 1 (right side)
-            row.splice(0, 1);      // Remove position 0 (left tile disappears)
+            animations.push({
+                from: tilePositions[0].originalPos,
+                to: 3,
+                value: row[0],
+                merges: true
+            });
+            row[1] = row[0] * 2;
+            row.splice(0, 1);
+            tilePositions.splice(0, 1);
         }
-        // Step 2 - Pad zeros
+
+        let remainingLength = row.length;
+        for (let i = 0; i < tilePositions.length; i++) {
+            let finalPos = (4 - remainingLength) + i;
+            if (tilePositions[i].originalPos !== finalPos) {
+                animations.push({
+                    from: tilePositions[i].originalPos,
+                    to: finalPos,
+                    value: tilePositions[i].value,
+                    merges: false
+                });
+            }
+        }
+
         row = padZeros(row);
-        console.log(originalRow, "row after Step 2: ", row);
+        console.log(originalRow, "row after transform: ", row);
     }
     // ------------------------------
     if(row.length === 1) {
-        // console.log("This is the length===2 case..BEFORE", row);
+        if (tilePositions.length > 0 && tilePositions[0].originalPos !== 3) {
+            animations.push({
+                from: tilePositions[0].originalPos,
+                to: 3,
+                value: tilePositions[0].value,
+                merges: false
+            });
+        }
         row = padZeros(row);
-        console.log(originalRow, "row after Step 2: ", row);
+        console.log(originalRow, "row after transform: ", row);
     }
-    console.log("Transformed row: ", padZeros(row));
-    return row;
+
+    console.log("Transformed row: ", row, "Animations:", animations);
+    return { row: row, animations: animations };
+}
+
+/**
+ * executeAnimations - Execute animations based on recorded moves from rowTransform
+ */
+function executeAnimations(animationInstructions, direction, callback) {
+    let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
+    let animationDuration = 1000;
+    let animationsCompleted = 0;
+    let totalAnimations = animationInstructions.length;
+
+    if (totalAnimations === 0) {
+        callback();
+        return;
+    }
+
+    console.log(`Executing ${totalAnimations} animations for ${direction} direction`);
+
+    animationInstructions.forEach((anim, index) => {
+        // Validate animation data before processing
+        if (!anim || anim.value === undefined || anim.value === null) {
+            console.warn(`Skipping invalid animation at index ${index}:`, anim);
+            animationsCompleted++;
+            if (animationsCompleted === totalAnimations) {
+                callback();
+            }
+            return;
+        }
+
+        let fromRow, fromCol, toRow, toCol;
+
+        // Convert line/column indices to grid positions based on direction
+        if (direction === 'up' || direction === 'down') {
+            // Column-based movement
+            if (anim.columnIndex === undefined || anim.fromIndex === undefined || anim.toIndex === undefined) {
+                console.warn(`Skipping animation with missing column data:`, anim);
+                animationsCompleted++;
+                if (animationsCompleted === totalAnimations) {
+                    callback();
+                }
+                return;
+            }
+            fromCol = anim.columnIndex;
+            toCol = anim.columnIndex;
+            fromRow = anim.fromIndex;
+            toRow = anim.toIndex;
+        } else {
+            // Row-based movement (left/right)
+            if (anim.rowIndex === undefined || anim.fromIndex === undefined || anim.toIndex === undefined) {
+                console.warn(`Skipping animation with missing row data:`, anim);
+                animationsCompleted++;
+                if (animationsCompleted === totalAnimations) {
+                    callback();
+                }
+                return;
+            }
+            fromRow = anim.rowIndex;
+            toRow = anim.rowIndex;
+            fromCol = anim.fromIndex;
+            toCol = anim.toIndex;
+        }
+
+        let divClass = divboard[fromRow][fromCol];
+        let cellDiv = $('.' + divClass);
+
+        let rowDiff = toRow - fromRow;
+        let colDiff = toCol - fromCol;
+        let translateY = rowDiff * 125;
+        let translateX = colDiff * 125;
+
+        console.log(`Animation ${index + 1}: Tile at (${fromRow},${fromCol}) value ${anim.value} ${anim.merges ? 'merges' : 'moves'} to (${toRow},${toCol})`);
+
+        cellDiv.css('z-index', '10');
+        cellDiv.css('transition', `transform ${animationDuration}ms ease-in-out`);
+        cellDiv.css('transform', `translate(${translateX}px, ${translateY}px)`);
+
+        setTimeout(() => {
+            cellDiv.css('transition', '');
+            cellDiv.css('transform', '');
+            cellDiv.css('z-index', '5');
+            animationsCompleted++;
+            if (animationsCompleted === totalAnimations) {
+                callback();
+            }
+        }, animationDuration);
+    });
 }
 
 /**
@@ -194,10 +403,10 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
             if (value !== 0) {
                 let divClass = divboard[row][col];
                 let cellDiv = $('.'+divClass);
-                
+
                 // Find where this tile ends up
                 let newPos = findTileDestination(beforeBoard, afterBoard, row, col, value, direction);
-                
+
                 // Only animate if position actually changed
                 if (newPos.row !== row || newPos.col !== col) {
                     // Calculate movement distance
@@ -207,7 +416,7 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
                     let translateX = colDiff * 125;
 
                     console.log(`Animating tile at (${row},${col}) value ${value} to (${newPos.row},${newPos.col}) - moving ${translateX}px, ${translateY}px`);
-                    
+
                     // Raise z-index for animating tile so it appears on top
                     cellDiv.css('z-index', '10');
 
@@ -235,218 +444,465 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
  * This function finds where a specific tile from beforeBoard ends up in afterBoard
  */
 function findTileDestination(beforeBoard, afterBoard, row, col, value, direction) {
-    // Strategy: Search from the tile's original position in the direction of movement
-    // Stop at the first matching value we find
-    
+    // For merges: a tile can move to a position that has double its value
+    // For regular moves: a tile moves to a position with the same value
+
     if (direction === 'up') {
         // Search upward from original position
-        for (let r = row; r >= 0; r--) {
-            if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
+        for (let r = 0; r <= row; r++) {
+            // Check if this position has our value (regular move) or double our value (merge)
+            if (afterBoard[r][col] === value) {
+                return { row: r, col: col };
+            }
+            if (afterBoard[r][col] === value * 2) {
+                // This is a merge - the tile at the lower position moves up
                 return { row: r, col: col };
             }
         }
     } else if (direction === 'down') {
         // Search downward from original position
-        for (let r = row; r <= 3; r++) {
-            if (afterBoard[r][col] === value || afterBoard[r][col] === value * 2) {
+        for (let r = 3; r >= row; r--) {
+            if (afterBoard[r][col] === value) {
+                return { row: r, col: col };
+            }
+            if (afterBoard[r][col] === value * 2) {
                 return { row: r, col: col };
             }
         }
     } else if (direction === 'left') {
         // Search leftward from original position
-        for (let c = col; c >= 0; c--) {
-            if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
+        for (let c = 0; c <= col; c++) {
+            if (afterBoard[row][c] === value) {
+                return { row: row, col: c };
+            }
+            if (afterBoard[row][c] === value * 2) {
                 return { row: row, col: c };
             }
         }
     } else if (direction === 'right') {
         // Search rightward from original position
-        for (let c = col; c <= 3; c++) {
-            if (afterBoard[row][c] === value || afterBoard[row][c] === value * 2) {
+        for (let c = 3; c >= col; c--) {
+            if (afterBoard[row][c] === value) {
+                return { row: row, col: c };
+            }
+            if (afterBoard[row][c] === value * 2) {
                 return { row: row, col: c };
             }
         }
     }
-    
+
     // Fallback: tile didn't move
     return { row: row, col: col };
 }
 
+/**
+ * upArrow - Handle up arrow key press
+ */
 function upArrow() {
-
-    // Step 1 - Load the column into an array
-    // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
-    let c0 = [gameboard[3][0], gameboard[2][0], gameboard[1][0], gameboard[0][0]];
-    let c1 = [gameboard[3][1], gameboard[2][1], gameboard[1][1], gameboard[0][1]];
-    let c2 = [gameboard[3][2], gameboard[2][2], gameboard[1][2], gameboard[0][2]];
-    let c3 = [gameboard[3][3], gameboard[2][3], gameboard[1][3], gameboard[0][3]];
+    // Step 1 - Load the column into an array (bottom to top for UP movement)
+    // Ensure we're getting actual values, not undefined
+    let c0 = [
+        gameboard[3][0] || 0,
+        gameboard[2][0] || 0,
+        gameboard[1][0] || 0,
+        gameboard[0][0] || 0
+    ];
+    let c1 = [
+        gameboard[3][1] || 0,
+        gameboard[2][1] || 0,
+        gameboard[1][1] || 0,
+        gameboard[0][1] || 0
+    ];
+    let c2 = [
+        gameboard[3][2] || 0,
+        gameboard[2][2] || 0,
+        gameboard[1][2] || 0,
+        gameboard[0][2] || 0
+    ];
+    let c3 = [
+        gameboard[3][3] || 0,
+        gameboard[2][3] || 0,
+        gameboard[1][3] || 0,
+        gameboard[0][3] || 0
+    ];
 
     let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
+    gameboardBefore = gameboard.slice().toString();
     console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
     let columns = [c0, c1, c2, c3];
     console.log("columns", columns);
 
+    let allAnimations = [];
+    for(let i = 0; i < columns.length; i++){
+        console.log("---- Line to be tested: ", columns[i]);
+        let result = rowTransform(columns[i]);
+        columns[i] = result.row;
+        console.log("---- Line after transform: ", columns[i]);
 
-    for(line of columns){
-        console.log("---- Line to be tested: ", line);
-        rowTransform(line);
+        // Convert array animations to grid animations for UP
+        result.animations.forEach(anim => {
+            // Only add animation if we have valid data
+            if (anim.value !== undefined && anim.value !== null &&
+                anim.from !== undefined && anim.to !== undefined) {
+                allAnimations.push({
+                    fromIndex: 3 - anim.from,  // Reverse because array[0]=row3, array[3]=row0
+                    toIndex: 3 - anim.to,
+                    columnIndex: i,
+                    value: anim.value,
+                    merges: anim.merges
+                });
+            }
+        });
     }
 
-    // Update gameboard with new column
-    gameboard[3] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-    gameboard[2] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-    gameboard[1] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-    gameboard[0] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+    // Update gameboard with new column - ensure no undefined values
+    // Remember: columns[i][0] is bottom (row 3), columns[i][3] is top (row 0)
+    gameboard[0] = [
+        columns[0][3] || 0,
+        columns[1][3] || 0,
+        columns[2][3] || 0,
+        columns[3][3] || 0
+    ];
+    gameboard[1] = [
+        columns[0][2] || 0,
+        columns[1][2] || 0,
+        columns[2][2] || 0,
+        columns[3][2] || 0
+    ];
+    gameboard[2] = [
+        columns[0][1] || 0,
+        columns[1][1] || 0,
+        columns[2][1] || 0,
+        columns[3][1] || 0
+    ];
+    gameboard[3] = [
+        columns[0][0] || 0,
+        columns[1][0] || 0,
+        columns[2][0] || 0,
+        columns[3][0] || 0
+    ];
     displayTextMatrix()
 
     let gameboardArrayAfter = deepCopy(gameboard);
-    let gameboardAfter = gameboard.slice().toString(); // shallow copy
-    console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
+    console.log("-gameboard AFTER", gameboardArrayAfter);
 
     // Animate the movements, then display and add new tile
-    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'up', function() {
+    executeAnimations(allAnimations, 'up', function() {
         displayGameboard();
-        if (action) { 
-            addRandom(); 
-            recordGameState('up');
+        if (action) {
+            addRandom();
+            recordGameState('up', allAnimations);
         }
     });
 }
 
+/**
+ * downArrow - Handle down arrow key press
+ */
 function downArrow(){
-    // Capture BEFORE state first, before any modifications
     let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
-
+    console.log("-gameboard BEFORE", gameboardArrayBefore);
     displayTextMatrix();
 
-    // Step 1 - Load the column into an array
-    // let c1 = [topRow[0], secondRow[0], thirdRow[0], bottomRow[0]];
     let c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
     let c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
     let c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
     let c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
 
     let columns = [c0, c1, c2, c3];
-    console.log("columns", columns);
 
+    let allAnimations = [];
+    for(let i = 0; i < columns.length; i++){
+        let result = rowTransform(columns[i]);
+        columns[i] = result.row;
 
-    for(line of columns){
-        console.log("---- Line to be tested: ", line);
-        rowTransform(line);
+        // For DOWN, array is already top-to-bottom, no reversal needed
+        result.animations.forEach(anim => {
+            if (anim.value !== undefined && anim.value !== null &&
+                anim.from !== undefined && anim.to !== undefined) {
+                allAnimations.push({
+                    fromIndex: anim.from,
+                    toIndex: anim.to,
+                    columnIndex: i,
+                    value: anim.value,
+                    merges: anim.merges
+                });
+            }
+        });
     }
 
-    // Update gameboard with new column
-    gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-    gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-    gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-    gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
+    gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]].map(v => v === undefined || v === null ? 0 : v);
     displayTextMatrix()
 
-    let gameboardArrayAfter = deepCopy(gameboard);
-    let gameboardAfter = gameboard.slice().toString(); // shallow copy
-    console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
-
-    // Animate the movements, then display and add new tile
-    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'down', function() {
+    executeAnimations(allAnimations, 'down', function() {
         displayGameboard();
-        if (action) { 
-            addRandom(); 
-            recordGameState('down');
-        }
-    });
-}
-
-function rightArrow(){
-    // Capture BEFORE state first, before any modifications
-    let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
-
-    displayTextMatrix();
-
-    let columns = gameboard;
-    console.log("columns", columns);
-
-    for(line of columns){
-        console.log("---- Line to be tested: ", line);
-        rowTransform(line);
-    }
-
-    displayTextMatrix()
-
-    let gameboardArrayAfter = deepCopy(gameboard);
-    let gameboardAfter = gameboard.slice().toString(); // shallow copy
-    console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
-
-    // Animate the movements, then display and add new tile
-    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'right', function() {
-        displayGameboard();
-        if (action) { 
-            addRandom(); 
-            recordGameState('right');
-        }
-    });
-}
-
-function leftArrow(){
-    // Capture BEFORE state first, before any modifications
-    let gameboardArrayBefore = deepCopy(gameboard);
-    gameboardBefore = gameboard.slice().toString(); // shallow text copy of the array
-    console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
-
-    displayTextMatrix();
-
-    // Step 1 - Reverse the rows of the gameboard to go left
-    let c0 = gameboard[0].reverse();
-    let c1 = gameboard[1].reverse();
-    let c2 = gameboard[2].reverse();
-    let c3 = gameboard[3].reverse();
-
-    console.log("c0", c0);
-    console.log("c1", c1);
-    console.log("c2", c2);
-    console.log("c3", c3);
-
-    let columns = [c0, c1, c2, c3];
-    console.log("columns", columns);
-
-    for(line of columns){
-        console.log("---- Line to be tested: ", line);
-        rowTransform(line);
-    }
-
-    // Update gameboard with new column
-    gameboard[0] = columns[0].reverse();
-    gameboard[1] = columns[1].reverse();
-    gameboard[2] = columns[2].reverse();
-    gameboard[3] = columns[3].reverse();
-    displayTextMatrix()
-
-    let gameboardArrayAfter = deepCopy(gameboard);
-    let gameboardAfter = gameboard.slice().toString(); // shallow copy
-    console.log("-gameboard AFTER", gameboardAfter, gameboardArrayAfter);
-
-    // Animate the movements, then display and add new tile
-    animateTileMovements(gameboardArrayBefore, gameboardArrayAfter, 'left', function() {
-        displayGameboard();
-        if (action) { 
-            addRandom(); 
-            recordGameState('left');
+        if (action) {
+            addRandom();
+            recordGameState('down', allAnimations);
         }
     });
 }
 
 /**
+ * rightArrow - Handle right arrow key press
+ */
+function rightArrow(){
+    let gameboardArrayBefore = deepCopy(gameboard);
+    console.log("-gameboard BEFORE", gameboardArrayBefore);
+    displayTextMatrix();
+
+    // Use slice to create copies so we don't mutate gameboard directly
+    let columns = [
+        gameboard[0].slice(),
+        gameboard[1].slice(),
+        gameboard[2].slice(),
+        gameboard[3].slice()
+    ];
+
+    let allAnimations = [];
+    for(let i = 0; i < columns.length; i++){
+        let result = rowTransform(columns[i]);
+        columns[i] = result.row;
+
+        // For RIGHT, no reversal needed
+        result.animations.forEach(anim => {
+            if (anim.value !== undefined && anim.value !== null &&
+                anim.from !== undefined && anim.to !== undefined) {
+                allAnimations.push({
+                    fromIndex: anim.from,
+                    toIndex: anim.to,
+                    rowIndex: i,
+                    value: anim.value,
+                    merges: anim.merges
+                });
+            }
+        });
+    }
+
+    // Update gameboard with transformed rows - ensure no undefined values
+    gameboard[0] = columns[0].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[1] = columns[1].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[2] = columns[2].map(v => v === undefined || v === null ? 0 : v);
+    gameboard[3] = columns[3].map(v => v === undefined || v === null ? 0 : v);
+    displayTextMatrix()
+
+    executeAnimations(allAnimations, 'right', function() {
+        displayGameboard();
+        if (action) {
+            addRandom();
+            recordGameState('right', allAnimations);
+        }
+    });
+}
+
+/**
+ * leftArrow - Handle left arrow key press
+ */
+function leftArrow(){
+    let gameboardArrayBefore = deepCopy(gameboard);
+    console.log("-gameboard BEFORE", gameboardArrayBefore);
+    displayTextMatrix();
+
+    // Step 1 - Reverse the rows of the gameboard to go left
+    let c0 = gameboard[0].slice().reverse();
+    let c1 = gameboard[1].slice().reverse();
+    let c2 = gameboard[2].slice().reverse();
+    let c3 = gameboard[3].slice().reverse();
+
+    let columns = [c0, c1, c2, c3];
+
+    let allAnimations = [];
+    for(let i = 0; i < columns.length; i++){
+        let result = rowTransform(columns[i]);
+        columns[i] = result.row;
+
+        // For LEFT, the input was reversed, so we need to map array positions back to grid positions
+        result.animations.forEach(anim => {
+            if (anim.value !== undefined && anim.value !== null &&
+                anim.from !== undefined && anim.to !== undefined) {
+                // When row is reversed: arrayPos 0→gridPos 3, arrayPos 1→gridPos 2, etc.
+                // After result.row is reversed back: we need to map the animation coordinates correctly
+                // Since we reverse input AND output, the grid positions are: gridPos = 3 - arrayPos
+                allAnimations.push({
+                    fromIndex: 3 - anim.from,  // Convert from reversed array pos to original grid pos
+                    toIndex: 3 - anim.to,      // Convert to reversed array pos to original grid pos
+                    rowIndex: i,
+                    value: anim.value,
+                    merges: anim.merges
+                });
+            }
+        });
+    }
+
+    // Update gameboard - reverse back to get correct orientation
+    gameboard[0] = columns[0].slice().reverse().map(v => v === undefined || v === null ? 0 : v);
+    gameboard[1] = columns[1].slice().reverse().map(v => v === undefined || v === null ? 0 : v);
+    gameboard[2] = columns[2].slice().reverse().map(v => v === undefined || v === null ? 0 : v);
+    gameboard[3] = columns[3].slice().reverse().map(v => v === undefined || v === null ? 0 : v);
+    displayTextMatrix()
+
+    console.log("Left arrow animations:", allAnimations);  // Debug: see what animations we're sending
+
+    executeAnimations(allAnimations, 'left', function() {
+        displayGameboard();
+        if (action) {
+            addRandom();
+            recordGameState('left', allAnimations);
+        }
+    });
+}
+
+/**
+ * generateAnimations - Compare before/after boards and generate animation instructions
+ * This is simple: find each non-zero tile in BEFORE, see where it went in AFTER
+ */
+function generateAnimations(beforeBoard, afterBoard, direction) {
+    let animations = [];
+
+    // Process based on direction to handle merges correctly
+    if (direction === 'up') {
+        // Process each column from top to bottom
+        for (let col = 0; col < 4; col++) {
+            for (let row = 0; row < 4; row++) {
+                let value = beforeBoard[row][col];
+                if (value !== 0) {
+                    // Find where this tile ends up
+                    let dest = findTileInAfterBoard(afterBoard, row, col, value, direction);
+                    if (dest && (dest.row !== row || dest.col !== col)) {
+                        animations.push({
+                            fromIndex: row,
+                            toIndex: dest.row,
+                            columnIndex: col,
+                            value: value,
+                            merges: dest.merged
+                        });
+                    }
+                }
+            }
+        }
+    } else if (direction === 'down') {
+        // Process each column from bottom to top
+        for (let col = 0; col < 4; col++) {
+            for (let row = 3; row >= 0; row--) {
+                let value = beforeBoard[row][col];
+                if (value !== 0) {
+                    let dest = findTileInAfterBoard(afterBoard, row, col, value, direction);
+                    if (dest && (dest.row !== row || dest.col !== col)) {
+                        animations.push({
+                            fromIndex: row,
+                            toIndex: dest.row,
+                            columnIndex: col,
+                            value: value,
+                            merges: dest.merged
+                        });
+                    }
+                }
+            }
+        }
+    } else if (direction === 'left') {
+        // Process each row from left to right
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+                let value = beforeBoard[row][col];
+                if (value !== 0) {
+                    let dest = findTileInAfterBoard(afterBoard, row, col, value, direction);
+                    if (dest && (dest.row !== row || dest.col !== col)) {
+                        animations.push({
+                            fromIndex: col,
+                            toIndex: dest.col,
+                            rowIndex: row,
+                            value: value,
+                            merges: dest.merged
+                        });
+                    }
+                }
+            }
+        }
+    } else if (direction === 'right') {
+        // Process each row from right to left
+        for (let row = 0; row < 4; row++) {
+            for (let col = 3; col >= 0; col--) {
+                let value = beforeBoard[row][col];
+                if (value !== 0) {
+                    let dest = findTileInAfterBoard(afterBoard, row, col, value, direction);
+                    if (dest && (dest.row !== row || dest.col !== col)) {
+                        animations.push({
+                            fromIndex: col,
+                            toIndex: dest.col,
+                            rowIndex: row,
+                            value: value,
+                            merges: dest.merged
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    console.log(`Generated ${animations.length} animations for ${direction}`);
+    return animations;
+}
+
+/**
+ * findTileInAfterBoard - Find where a tile from (row,col) with value ended up
+ */
+function findTileInAfterBoard(afterBoard, row, col, value, direction) {
+    if (direction === 'up') {
+        // Search upward from original position
+        for (let r = 0; r <= row; r++) {
+            if (afterBoard[r][col] === value) {
+                return { row: r, col: col, merged: false };
+            }
+            if (afterBoard[r][col] === value * 2) {
+                return { row: r, col: col, merged: true };
+            }
+        }
+    } else if (direction === 'down') {
+        // Search downward from original position
+        for (let r = 3; r >= row; r--) {
+            if (afterBoard[r][col] === value) {
+                return { row: r, col: col, merged: false };
+            }
+            if (afterBoard[r][col] === value * 2) {
+                return { row: r, col: col, merged: true };
+            }
+        }
+    } else if (direction === 'left') {
+        // Search leftward from original position
+        for (let c = 0; c <= col; c++) {
+            if (afterBoard[row][c] === value) {
+                return { row: row, col: c, merged: false };
+            }
+            if (afterBoard[row][c] === value * 2) {
+                return { row: row, col: c, merged: true };
+            }
+        }
+    } else if (direction === 'right') {
+        // Search rightward from original position
+        for (let c = 3; c >= col; c--) {
+            if (afterBoard[row][c] === value) {
+                return { row: row, col: c, merged: false };
+            }
+            if (afterBoard[row][c] === value * 2) {
+                return { row: row, col: c, merged: true };
+            }
+        }
+    }
+    return null;
+}
+
+/**
  * recordGameState - Record the current game state to history
  */
-function recordGameState(move) {
+function recordGameState(move, animations = []) {
     const state = {
         board: deepCopy(gameboard),
         move: move,
+        animations: animations,
         timestamp: Date.now()
     };
     gameHistory.push(state);
@@ -478,12 +934,21 @@ function replayForward() {
         currentHistoryIndex++;
         const currentState = gameHistory[currentHistoryIndex];
         const previousState = gameHistory[previousIndex];
-        
-        // Animate the transition from previous to current
-        animateTileMovements(previousState.board, currentState.board, currentState.move, function() {
-            loadHistoryState(currentHistoryIndex, false);
-        });
-        
+
+        // Use saved animations if available (new system), otherwise fall back to old system
+        if (currentState.animations && currentState.animations.length > 0) {
+            console.log(`Using saved animations for replay: ${currentState.animations.length} animations`);
+            executeAnimations(currentState.animations, currentState.move, function() {
+                loadHistoryState(currentHistoryIndex, false);
+            });
+        } else {
+            console.log(`No saved animations, using old animation system`);
+            // Fallback to old system for old history entries
+            animateTileMovements(previousState.board, currentState.board, currentState.move, function() {
+                loadHistoryState(currentHistoryIndex, false);
+            });
+        }
+
         isReplaying = true;
         updateReplayStatus();
         console.log(`⏭️ Replay: Step ${currentHistoryIndex}/${gameHistory.length - 1} - Move: ${gameHistory[currentHistoryIndex].move}`);
@@ -531,119 +996,22 @@ function loadHistoryState(index, animate = false) {
 }
 
 /**
- * replayMoveWithCurrentLogic - Re-execute the current move with current game logic
- * Useful for testing bug fixes against historical game states
+ * replayMoveWithCurrentLogic - Exit replay mode and continue playing from current position
+ * The game board is already at the desired state, just need to exit replay mode
  */
 function replayMoveWithCurrentLogic() {
-    if (!isReplaying || currentHistoryIndex <= 0) {
-        console.log("Must be in replay mode and not at the start");
+    if (!isReplaying) {
+        console.log("Already in live game mode");
         return;
     }
-    
-    const currentMove = gameHistory[currentHistoryIndex].move;
-    const previousState = gameHistory[currentHistoryIndex - 1];
-    
-    console.log(`🔄 Re-executing move: ${currentMove} with current logic`);
-    console.log("Original BEFORE state:", previousState.board);
-    console.log("Original AFTER state:", gameHistory[currentHistoryIndex].board);
-    
-    // Set gameboard to the previous state
-    gameboard = deepCopy(previousState.board);
-    
-    // Temporarily disable history recording and random tile addition
-    const originalHistoryLength = gameHistory.length;
-    const oldAction = action;
-    action = 0; // Disable random tile addition
-    
-    // Declare variables outside switch to avoid redeclaration issues
-    let c0, c1, c2, c3, columns;
-    
-    // Execute the move with current logic
-    switch(currentMove) {
-        case 'up':
-            c0 = [gameboard[3][0], gameboard[2][0], gameboard[1][0], gameboard[0][0]];
-            c1 = [gameboard[3][1], gameboard[2][1], gameboard[1][1], gameboard[0][1]];
-            c2 = [gameboard[3][2], gameboard[2][2], gameboard[1][2], gameboard[0][2]];
-            c3 = [gameboard[3][3], gameboard[2][3], gameboard[1][3], gameboard[0][3]];
-            columns = [c0, c1, c2, c3];
-            for(line of columns) { rowTransform(line); }
-            gameboard[3] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-            gameboard[2] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-            gameboard[1] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-            gameboard[0] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
-            break;
-        case 'down':
-            c0 = [gameboard[0][0], gameboard[1][0], gameboard[2][0], gameboard[3][0]];
-            c1 = [gameboard[0][1], gameboard[1][1], gameboard[2][1], gameboard[3][1]];
-            c2 = [gameboard[0][2], gameboard[1][2], gameboard[2][2], gameboard[3][2]];
-            c3 = [gameboard[0][3], gameboard[1][3], gameboard[2][3], gameboard[3][3]];
-            columns = [c0, c1, c2, c3];
-            for(line of columns) { rowTransform(line); }
-            gameboard[0] = [columns[0][0], columns[1][0], columns[2][0], columns[3][0]];
-            gameboard[1] = [columns[0][1], columns[1][1], columns[2][1], columns[3][1]];
-            gameboard[2] = [columns[0][2], columns[1][2], columns[2][2], columns[3][2]];
-            gameboard[3] = [columns[0][3], columns[1][3], columns[2][3], columns[3][3]];
-            break;
-        case 'left':
-            c0 = gameboard[0].slice().reverse();
-            c1 = gameboard[1].slice().reverse();
-            c2 = gameboard[2].slice().reverse();
-            c3 = gameboard[3].slice().reverse();
-            columns = [c0, c1, c2, c3];
-            for(line of columns) { rowTransform(line); }
-            gameboard[0] = columns[0].reverse();
-            gameboard[1] = columns[1].reverse();
-            gameboard[2] = columns[2].reverse();
-            gameboard[3] = columns[3].reverse();
-            break;
-        case 'right':
-            columns = [gameboard[0].slice(), gameboard[1].slice(), gameboard[2].slice(), gameboard[3].slice()];
-            for(line of columns) { rowTransform(line); }
-            gameboard[0] = columns[0];
-            gameboard[1] = columns[1];
-            gameboard[2] = columns[2];
-            gameboard[3] = columns[3];
-            break;
-    }
-    
-    // Remove any history entries that were accidentally added
-    gameHistory.length = originalHistoryLength;
-    
-    action = oldAction; // Restore action flag
-    
-    const gameboardAfter = deepCopy(gameboard);
-    
-    console.log("NEW AFTER state (current logic):", gameboardAfter);
-    displayTextMatrix();
-    
-    // Compare results
-    let isDifferent = false;
-    let differences = [];
-    for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 4; c++) {
-            if (gameHistory[currentHistoryIndex].board[r][c] !== gameboardAfter[r][c]) {
-                isDifferent = true;
-                differences.push(`Position (${r},${c}): Original=${gameHistory[currentHistoryIndex].board[r][c]}, New=${gameboardAfter[r][c]}`);
-            }
-        }
-    }
-    
-    if (isDifferent) {
-        console.log("⚠️ DIFFERENCE DETECTED! Current logic produces different result.");
-        console.log("Differences:", differences);
-        
-        // Keep the NEW result displayed so user can see it
-        displayGameboard();
-        
-        alert(`Result differs! The NEW result is now displayed on the board.\n\n${differences.length} difference(s) found.\nCheck console for details.\n\nClick OK to see the new result, or use Previous/Next to restore old view.`);
-    } else {
-        console.log("✅ Results match! Current logic produces same result as original.");
-        
-        // Restore the original history state for display
-        loadHistoryState(currentHistoryIndex, false);
-        
-        alert("Results match! Current logic produces the same result.");
-    }
+
+    console.log(`🎮 Exiting replay mode. Continuing game from position ${currentHistoryIndex}`);
+
+    // Simply exit replay mode - the gameboard is already loaded with the correct state
+    isReplaying = false;
+    updateReplayStatus();
+
+    console.log(`✅ You can now play from this position using arrow keys.`);
 }
 
 /**
@@ -652,12 +1020,12 @@ function replayMoveWithCurrentLogic() {
 function updateReplayStatus() {
     const statusEl = document.getElementById('replayStatus');
     const testBtn = document.getElementById('replayCurrentLogicBtn');
-    
+
     if (statusEl) {
         if (isReplaying) {
             statusEl.textContent = `📼 Replay Mode: Step ${currentHistoryIndex + 1}/${gameHistory.length} - ${gameHistory[currentHistoryIndex].move}`;
             statusEl.style.color = '#d32f2f';
-            
+
             // Show test button only if not at start
             if (testBtn && currentHistoryIndex > 0) {
                 testBtn.style.display = 'inline-block';
@@ -665,7 +1033,7 @@ function updateReplayStatus() {
         } else {
             statusEl.textContent = '🟢 Live Game';
             statusEl.style.color = '#388e3c';
-            
+
             // Hide test button when not in replay mode
             if (testBtn) {
                 testBtn.style.display = 'none';
@@ -695,7 +1063,8 @@ function deepCopy(array) {
     let arrayCopy = [[], [], [], []];
     for (let o = 0; o < 4; o++) {
         for (let i = 0; i < 4; i++) {
-        arrayCopy[o][i] = array[o][i];
+            // Ensure we copy actual values, not undefined
+            arrayCopy[o][i] = (array[o][i] === undefined || array[o][i] === null) ? 0 : array[o][i];
         }
     }
     return arrayCopy;
@@ -792,7 +1161,7 @@ function displayGameboard() {
             let bgColor = returnCellColor(value);
             let text = value;
             if (value === 0) { text = ''; }
-            
+
             // Only update if the value changed to prevent flickering
             if (cellDiv.text() != text) {
                 cellDiv.text(text);
@@ -895,17 +1264,11 @@ function importGameHistory() {
 
 
 
-
-
-
-
-
-
 /** ------    UNUSED FUNCTIONS BELOW    ------ */
-/** 
+/**
  * combineLastTwo - Used by the rowTransform algorithm.
- *  If the last two numbers match, combine them. 
- * 
+ *  If the last two numbers match, combine them.
+ *
 */
 function combineLastTwo(arr) {
     let last = arr.length - 1;
@@ -1247,5 +1610,3 @@ function slideVertical(numSpaces, direction, textTransform, div) {
         $(this).text(textTransform).css("background-color", bgColor); f();
     });
 }
-
-
