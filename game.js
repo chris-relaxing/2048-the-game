@@ -8,6 +8,7 @@ let currentHistoryIndex = -1;
 let isReplaying = false;
 let isGameOver = false;
 let currentScore = 0;
+let moveCount = 0;
 
 // Add first two numbers to the board
 addRandom();
@@ -602,8 +603,10 @@ function upArrow() {
         displayGameboard();
         if (action) {
             addRandom();
-            currentScore += moveScore; // Add points earned from merges
+            currentScore += moveScore;
+            moveCount++;
             updateScoreDisplay();
+            updateMoveCount();
             recordGameState('up', allAnimations);
 
             // Check for game over after move
@@ -662,7 +665,9 @@ function downArrow(){
         if (action) {
             addRandom();
             currentScore += moveScore;
+            moveCount++;
             updateScoreDisplay();
+            updateMoveCount();
             recordGameState('down', allAnimations);
 
             if (checkGameOver()) {
@@ -722,7 +727,9 @@ function rightArrow(){
         if (action) {
             addRandom();
             currentScore += moveScore;
+            moveCount++;
             updateScoreDisplay();
+            updateMoveCount();
             recordGameState('right', allAnimations);
 
             if (checkGameOver()) {
@@ -787,7 +794,9 @@ function leftArrow(){
         if (action) {
             addRandom();
             currentScore += moveScore;
+            moveCount++;
             updateScoreDisplay();
+            updateMoveCount();
             recordGameState('left', allAnimations);
 
             if (checkGameOver()) {
@@ -1326,6 +1335,7 @@ function resetGame() {
     isReplaying = false;
     isGameOver = false;
     currentScore = 0;
+    moveCount = 0;
 
     // Hide game over overlay
     $('#gameOverOverlay').fadeOut(300);
@@ -1333,6 +1343,7 @@ function resetGame() {
     // Clear and redisplay board
     displayGameboard();
     updateScoreDisplay();
+    updateMoveCount();
 
     // Add initial tiles
     addRandom();
@@ -1371,6 +1382,13 @@ function resetGame() {
 //     }
 //     return score;
 // }
+
+/**
+ * updateMoveCount - Update the move counter display
+ */
+function updateMoveCount() {
+    $('#moveCount').text(moveCount);
+}
 
 /**
  * updateScoreDisplay - Update the score display in the UI
