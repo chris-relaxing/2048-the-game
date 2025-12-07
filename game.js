@@ -6,15 +6,22 @@ let gameboardBefore = ""; // Make this global
 let gameHistory = [];
 let currentHistoryIndex = -1;
 let isReplaying = false;
-
-// TODO: Algorithm is failing at this point: Middle numbers won't combine.
-// For example [8, 4, 4, 2] or [4, 8, 8, 2]
+let isGameOver = false;
+let currentScore = 0;
 
 // Add first two numbers to the board
 addRandom();
 addRandom();
 // Record initial state
 recordGameState('init');
+updateScoreDisplay();
+
+// Play Again button handler
+$(document).ready(function() {
+    $('#playAgainBtn').click(function() {
+        resetGame();
+    });
+});
 
 document.onkeydown = function (e) {
   // Replay controls
@@ -35,28 +42,28 @@ document.onkeydown = function (e) {
       return;
   }
 
-  // Don't allow moves during replay
+  // Don't allow moves during replay or game over
   if (isReplaying) {
       console.log("Cannot make moves during replay. Press End to return to live game.");
+      return;
+  }
+  
+  if (isGameOver) {
       return;
   }
 
   switch (e.key) {
       case 'ArrowUp':
           upArrow();
-          console.table("Up arrow");
           break;
       case 'ArrowDown':
           downArrow();
-          console.table("Down arrow");
           break;
       case 'ArrowLeft':
           leftArrow();
-          console.table("Left arrow");
           break;
       case 'ArrowRight':
           rightArrow();
-          console.table("Right arrow");
           break;
   }
 };
@@ -286,7 +293,7 @@ function rowTransform(row) {
  */
 function executeAnimations(animationInstructions, direction, callback) {
     let divboard = [['a','b','c','d'], ['e','f','g','h'], ['i','j','k','l'], ['m','n','o','p']];
-    let animationDuration = 1000;
+    let animationDuration = 250;
     let animationsCompleted = 0;
     let totalAnimations = animationInstructions.length;
 
@@ -295,12 +302,8 @@ function executeAnimations(animationInstructions, direction, callback) {
         return;
     }
 
-    console.log(`Executing ${totalAnimations} animations for ${direction} direction`);
-
     animationInstructions.forEach((anim, index) => {
-        // Validate animation data before processing
         if (!anim || anim.value === undefined || anim.value === null) {
-            console.warn(`Skipping invalid animation at index ${index}:`, anim);
             animationsCompleted++;
             if (animationsCompleted === totalAnimations) {
                 callback();
@@ -310,11 +313,8 @@ function executeAnimations(animationInstructions, direction, callback) {
 
         let fromRow, fromCol, toRow, toCol;
 
-        // Convert line/column indices to grid positions based on direction
         if (direction === 'up' || direction === 'down') {
-            // Column-based movement
             if (anim.columnIndex === undefined || anim.fromIndex === undefined || anim.toIndex === undefined) {
-                console.warn(`Skipping animation with missing column data:`, anim);
                 animationsCompleted++;
                 if (animationsCompleted === totalAnimations) {
                     callback();
@@ -326,9 +326,7 @@ function executeAnimations(animationInstructions, direction, callback) {
             fromRow = anim.fromIndex;
             toRow = anim.toIndex;
         } else {
-            // Row-based movement (left/right)
             if (anim.rowIndex === undefined || anim.fromIndex === undefined || anim.toIndex === undefined) {
-                console.warn(`Skipping animation with missing row data:`, anim);
                 animationsCompleted++;
                 if (animationsCompleted === totalAnimations) {
                     callback();
@@ -349,8 +347,6 @@ function executeAnimations(animationInstructions, direction, callback) {
         let translateY = rowDiff * 125;
         let translateX = colDiff * 125;
 
-        console.log(`Animation ${index + 1}: Tile at (${fromRow},${fromCol}) value ${anim.value} ${anim.merges ? 'merges' : 'moves'} to (${toRow},${toCol})`);
-
         cellDiv.css('z-index', '10');
         cellDiv.css('transition', `transform ${animationDuration}ms ease-in-out`);
         cellDiv.css('transform', `translate(${translateX}px, ${translateY}px)`);
@@ -360,11 +356,9 @@ function executeAnimations(animationInstructions, direction, callback) {
             cellDiv.css('transform', '');
             cellDiv.css('z-index', '5');
 
-            // Add merge animation effect if this was a merge
             if (anim.merges) {
                 let targetDivClass = divboard[toRow][toCol];
                 let targetDiv = $('.' + targetDivClass);
-                // Add a brief scale-up effect for merged tiles
                 targetDiv.addClass('tile-merged');
                 setTimeout(() => {
                     targetDiv.removeClass('tile-merged');
@@ -426,8 +420,6 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
                     let colDiff = newPos.col - col;
                     let translateY = rowDiff * 125;
                     let translateX = colDiff * 125;
-
-                    console.log(`Animating tile at (${row},${col}) value ${value} to (${newPos.row},${newPos.col}) - moving ${translateX}px, ${translateY}px`);
 
                     // Raise z-index for animating tile so it appears on top
                     cellDiv.css('z-index', '10');
@@ -543,14 +535,11 @@ function upArrow() {
     console.log("-gameboard BEFORE", gameboardBefore, gameboardArrayBefore);
 
     let columns = [c0, c1, c2, c3];
-    console.log("columns", columns);
 
     let allAnimations = [];
     for(let i = 0; i < columns.length; i++){
-        console.log("---- Line to be tested: ", columns[i]);
         let result = rowTransform(columns[i]);
         columns[i] = result.row;
-        console.log("---- Line after transform: ", columns[i]);
 
         // Convert array animations to grid animations for UP
         result.animations.forEach(anim => {
@@ -604,7 +593,14 @@ function upArrow() {
         displayGameboard();
         if (action) {
             addRandom();
+            currentScore = calculateScore();
+            updateScoreDisplay();
             recordGameState('up', allAnimations);
+            
+            // Check for game over after move
+            if (checkGameOver()) {
+                setTimeout(() => showGameOver(), 500);
+            }
         }
     });
 }
@@ -654,7 +650,13 @@ function downArrow(){
         displayGameboard();
         if (action) {
             addRandom();
+            currentScore = calculateScore();
+            updateScoreDisplay();
             recordGameState('down', allAnimations);
+            
+            if (checkGameOver()) {
+                setTimeout(() => showGameOver(), 500);
+            }
         }
     });
 }
@@ -706,7 +708,13 @@ function rightArrow(){
         displayGameboard();
         if (action) {
             addRandom();
+            currentScore = calculateScore();
+            updateScoreDisplay();
             recordGameState('right', allAnimations);
+            
+            if (checkGameOver()) {
+                setTimeout(() => showGameOver(), 500);
+            }
         }
     });
 }
@@ -763,7 +771,13 @@ function leftArrow(){
         displayGameboard();
         if (action) {
             addRandom();
+            currentScore = calculateScore();
+            updateScoreDisplay();
             recordGameState('left', allAnimations);
+            
+            if (checkGameOver()) {
+                setTimeout(() => showGameOver(), 500);
+            }
         }
     });
 }
@@ -1129,8 +1143,6 @@ function addRandom(){
         // ---------------------------------------------
 
     }
-    console.log("How many open squares?", opensquares.length-1)
-
 }
 
 /**
@@ -1243,5 +1255,99 @@ function importGameHistory() {
     };
 
     input.click();
+}
+
+/**
+ * checkGameOver - Check if no moves are possible
+ */
+function checkGameOver() {
+    // First check if there are any empty spaces
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            if (gameboard[row][col] === 0) {
+                return false; // Can still play
+            }
+        }
+    }
+
+    // Check for possible merges horizontally
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 3; col++) {
+            if (gameboard[row][col] === gameboard[row][col + 1]) {
+                return false; // Can merge
+            }
+        }
+    }
+
+    // Check for possible merges vertically
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 4; col++) {
+            if (gameboard[row][col] === gameboard[row + 1][col]) {
+                return false; // Can merge
+            }
+        }
+    }
+
+    return true; // No moves possible
+}
+
+/**
+ * showGameOver - Display game over overlay
+ */
+function showGameOver() {
+    isGameOver = true;
+    $('#finalScore').text('Final Score: ' + currentScore);
+    $('#gameOverOverlay').fadeIn(300);
+}
+
+/**
+ * resetGame - Reset the game to initial state
+ */
+function resetGame() {
+    // Reset game state
+    gameboard = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]];
+    gameHistory = [];
+    currentHistoryIndex = -1;
+    isReplaying = false;
+    isGameOver = false;
+    currentScore = 0;
+
+    // Hide game over overlay
+    $('#gameOverOverlay').fadeOut(300);
+
+    // Clear and redisplay board
+    displayGameboard();
+    updateScoreDisplay();
+
+    // Add initial tiles
+    addRandom();
+    addRandom();
+    
+    // Update score after initial tiles
+    currentScore = calculateScore();
+    updateScoreDisplay();
+    
+    // Record initial state
+    recordGameState('init');
+}
+
+/**
+ * updateScoreDisplay - Update the score display
+ */
+function updateScoreDisplay() {
+    $('#currentScore').text(currentScore);
+}
+
+/**
+ * calculateScore - Calculate total score from gameboard
+ */
+function calculateScore() {
+    let score = 0;
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            score += gameboard[row][col];
+        }
+    }
+    return score;
 }
 

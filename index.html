@@ -24,8 +24,14 @@
     <p class="replay-status" id="replayStatus">Live Game</p>
 </div>
 
+<!-- Add scoreboard above game grid, aligned to the right under replay controls -->
+<div class="scoreboard">
+    <div class="score-label">Score</div>
+    <div id="currentScore" class="score-value">0</div>
+</div>
+
 <div class="container">
-  <div class="grid">
+  <div class="grid" style="position: relative;">
     <div class="cell"><div class="a"></div></div>
     <div class="cell"><div class="b"></div></div>
     <div class="cell"><div class="c"></div></div>
@@ -45,6 +51,15 @@
     <div class="cell"><div class="n"></div></div>
     <div class="cell"><div class="o"></div></div>
     <div class="cell"><div class="p"></div></div>
+
+    <!-- Game Over Overlay - positioned relative to grid -->
+    <div id="gameOverOverlay" class="game-over-overlay" style="display: none;">
+      <div class="game-over-content">
+          <h1>Game Over!</h1>
+          <p id="finalScore">Score: 0</p>
+          <button id="playAgainBtn" class="play-again-btn">Play Again</button>
+      </div>
+    </div>
   </div>
 </div>
 
