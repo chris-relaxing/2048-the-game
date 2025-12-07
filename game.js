@@ -47,7 +47,7 @@ document.onkeydown = function (e) {
       console.log("Cannot make moves during replay. Press End to return to live game.");
       return;
   }
-  
+
   if (isGameOver) {
       return;
   }
@@ -100,7 +100,8 @@ function padZeros(arr) {
 
 function rowTransform(row) {
     const originalRow = [...row];
-    let animations = []; // Track animations in terms of array indices (0-3)
+    let animations = [];
+    let mergeScore = 0; // Track points earned from merges in this row
 
     // Before the below, let's remove all zeros, then we will see how many digits remain
     row = removeZeros(row);
@@ -132,6 +133,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[3] = row[2] * 2;
+            mergeScore += row[3]; // Award points equal to the new tile value
             tilePositions[3].value = row[3];
             tilePositions[3].mergedThisTurn = true;  // Mark as merged
             row.splice(2, 1);
@@ -146,6 +148,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[2] = row[1] * 2;
+            mergeScore += row[2]; // Award points
             tilePositions[2].value = row[2];
             tilePositions[2].mergedThisTurn = true;  // Mark as merged
             row.splice(1, 1);
@@ -160,6 +163,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[1] = row[0] * 2;
+            mergeScore += row[1]; // Award points
             tilePositions[1].value = row[1];
             tilePositions[1].mergedThisTurn = true;  // Mark as merged
             row.splice(0, 1);
@@ -208,6 +212,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[2] = row[1] * 2;
+            mergeScore += row[2]; // Award points
             row.splice(1, 1);
             tilePositions.splice(1, 1);
         }
@@ -220,6 +225,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[1] = row[0] * 2;
+            mergeScore += row[1]; // Award points
             row.splice(0, 1);
             tilePositions.splice(0, 1);
         }
@@ -250,6 +256,7 @@ function rowTransform(row) {
                 merges: true
             });
             row[1] = row[0] * 2;
+            mergeScore += row[1]; // Award points
             row.splice(0, 1);
             tilePositions.splice(0, 1);
         }
@@ -285,7 +292,7 @@ function rowTransform(row) {
     }
 
     console.log("Transformed row: ", row, "Animations:", animations);
-    return { row: row, animations: animations };
+    return { row: row, animations: animations, score: mergeScore };
 }
 
 /**
@@ -537,9 +544,11 @@ function upArrow() {
     let columns = [c0, c1, c2, c3];
 
     let allAnimations = [];
+    let moveScore = 0; // Track points earned in this move
     for(let i = 0; i < columns.length; i++){
         let result = rowTransform(columns[i]);
         columns[i] = result.row;
+        moveScore += result.score; // Add merge points from this column
 
         // Convert array animations to grid animations for UP
         result.animations.forEach(anim => {
@@ -593,10 +602,10 @@ function upArrow() {
         displayGameboard();
         if (action) {
             addRandom();
-            currentScore = calculateScore();
+            currentScore += moveScore; // Add points earned from merges
             updateScoreDisplay();
             recordGameState('up', allAnimations);
-            
+
             // Check for game over after move
             if (checkGameOver()) {
                 setTimeout(() => showGameOver(), 500);
@@ -621,9 +630,11 @@ function downArrow(){
     let columns = [c0, c1, c2, c3];
 
     let allAnimations = [];
+    let moveScore = 0;
     for(let i = 0; i < columns.length; i++){
         let result = rowTransform(columns[i]);
         columns[i] = result.row;
+        moveScore += result.score;
 
         // For DOWN, array is already top-to-bottom, no reversal needed
         result.animations.forEach(anim => {
@@ -650,10 +661,10 @@ function downArrow(){
         displayGameboard();
         if (action) {
             addRandom();
-            currentScore = calculateScore();
+            currentScore += moveScore;
             updateScoreDisplay();
             recordGameState('down', allAnimations);
-            
+
             if (checkGameOver()) {
                 setTimeout(() => showGameOver(), 500);
             }
@@ -678,9 +689,11 @@ function rightArrow(){
     ];
 
     let allAnimations = [];
+    let moveScore = 0;
     for(let i = 0; i < columns.length; i++){
         let result = rowTransform(columns[i]);
         columns[i] = result.row;
+        moveScore += result.score;
 
         // For RIGHT, no reversal needed
         result.animations.forEach(anim => {
@@ -708,10 +721,10 @@ function rightArrow(){
         displayGameboard();
         if (action) {
             addRandom();
-            currentScore = calculateScore();
+            currentScore += moveScore;
             updateScoreDisplay();
             recordGameState('right', allAnimations);
-            
+
             if (checkGameOver()) {
                 setTimeout(() => showGameOver(), 500);
             }
@@ -736,9 +749,11 @@ function leftArrow(){
     let columns = [c0, c1, c2, c3];
 
     let allAnimations = [];
+    let moveScore = 0;
     for(let i = 0; i < columns.length; i++){
         let result = rowTransform(columns[i]);
         columns[i] = result.row;
+        moveScore += result.score;
 
         // For LEFT, the input was reversed, so we need to map array positions back to grid positions
         result.animations.forEach(anim => {
@@ -771,10 +786,10 @@ function leftArrow(){
         displayGameboard();
         if (action) {
             addRandom();
-            currentScore = calculateScore();
+            currentScore += moveScore;
             updateScoreDisplay();
             recordGameState('left', allAnimations);
-            
+
             if (checkGameOver()) {
                 setTimeout(() => showGameOver(), 500);
             }
@@ -1322,32 +1337,45 @@ function resetGame() {
     // Add initial tiles
     addRandom();
     addRandom();
-    
-    // Update score after initial tiles
-    currentScore = calculateScore();
+
+    // Update score after initial tiles (should be 0 since no merges yet)
+    currentScore = 0;
     updateScoreDisplay();
-    
+
     // Record initial state
     recordGameState('init');
 }
 
 /**
- * updateScoreDisplay - Update the score display
+ * calculateScore - Calculate total score from gameboard
+ *
+ * SCORING RULES:
+ * - Simple sum of all tile values on the board
+ * - Score increases as tiles merge (e.g., 2+2=4 adds 4 to score)
+ * - Alternative scoring could track merge points (sum of merged tiles only)
+ * - Common 2048 scoring: each merge awards points equal to the NEW tile value
+ *   For example: merging two 2s into a 4 awards 4 points
+ *
+ * Current implementation: Sum of all tiles (simpler approach)
+ */
+// function calculateScore() {
+//     let score = 0;
+//     for (let row = 0; row < 4; row++) {
+//         for (let col = 0; col < 4; col++) {
+//             let value = gameboard[row][col];
+//             // Ensure value is a number
+//             if (typeof value === 'number' && !isNaN(value)) {
+//                 score += value;
+//             }
+//         }
+//     }
+//     return score;
+// }
+
+/**
+ * updateScoreDisplay - Update the score display in the UI
  */
 function updateScoreDisplay() {
     $('#currentScore').text(currentScore);
-}
-
-/**
- * calculateScore - Calculate total score from gameboard
- */
-function calculateScore() {
-    let score = 0;
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 4; col++) {
-            score += gameboard[row][col];
-        }
-    }
-    return score;
 }
 
