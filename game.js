@@ -9,6 +9,12 @@ let isReplaying = false;
 let isGameOver = false;
 let currentScore = 0;
 let moveCount = 0;
+let bestScore = 0;
+
+// Load best score from localStorage
+if (localStorage.getItem('2048-bestScore')) {
+    bestScore = parseInt(localStorage.getItem('2048-bestScore'));
+}
 
 // Add first two numbers to the board
 addRandom();
@@ -605,8 +611,7 @@ function upArrow() {
             addRandom();
             currentScore += moveScore;
             moveCount++;
-            updateScoreDisplay();
-            updateMoveCount();
+            updateAllStats();
             recordGameState('up', allAnimations);
 
             // Check for game over after move
@@ -666,8 +671,7 @@ function downArrow(){
             addRandom();
             currentScore += moveScore;
             moveCount++;
-            updateScoreDisplay();
-            updateMoveCount();
+            updateAllStats();
             recordGameState('down', allAnimations);
 
             if (checkGameOver()) {
@@ -728,8 +732,7 @@ function rightArrow(){
             addRandom();
             currentScore += moveScore;
             moveCount++;
-            updateScoreDisplay();
-            updateMoveCount();
+            updateAllStats();
             recordGameState('right', allAnimations);
 
             if (checkGameOver()) {
@@ -795,8 +798,7 @@ function leftArrow(){
             addRandom();
             currentScore += moveScore;
             moveCount++;
-            updateScoreDisplay();
-            updateMoveCount();
+            updateAllStats();
             recordGameState('left', allAnimations);
 
             if (checkGameOver()) {
@@ -1342,8 +1344,7 @@ function resetGame() {
 
     // Clear and redisplay board
     displayGameboard();
-    updateScoreDisplay();
-    updateMoveCount();
+    updateAllStats();
 
     // Add initial tiles
     addRandom();
@@ -1351,37 +1352,51 @@ function resetGame() {
 
     // Update score after initial tiles (should be 0 since no merges yet)
     currentScore = 0;
-    updateScoreDisplay();
+    updateAllStats();
 
     // Record initial state
     recordGameState('init');
 }
 
 /**
- * calculateScore - Calculate total score from gameboard
- *
- * SCORING RULES:
- * - Simple sum of all tile values on the board
- * - Score increases as tiles merge (e.g., 2+2=4 adds 4 to score)
- * - Alternative scoring could track merge points (sum of merged tiles only)
- * - Common 2048 scoring: each merge awards points equal to the NEW tile value
- *   For example: merging two 2s into a 4 awards 4 points
- *
- * Current implementation: Sum of all tiles (simpler approach)
+ * getHighestTile - Find the highest tile value on the board
  */
-// function calculateScore() {
-//     let score = 0;
-//     for (let row = 0; row < 4; row++) {
-//         for (let col = 0; col < 4; col++) {
-//             let value = gameboard[row][col];
-//             // Ensure value is a number
-//             if (typeof value === 'number' && !isNaN(value)) {
-//                 score += value;
-//             }
-//         }
-//     }
-//     return score;
-// }
+function getHighestTile() {
+    let highest = 0;
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+            if (gameboard[row][col] > highest) {
+                highest = gameboard[row][col];
+            }
+        }
+    }
+    return highest;
+}
+
+/**
+ * updateAllStats - Update all stat displays
+ */
+function updateAllStats() {
+    // Update score
+    $('#currentScore').text(currentScore);
+
+    // Update move count
+    $('#moveCount').text(moveCount);
+
+    // Update best score
+    if (currentScore > bestScore) {
+        bestScore = currentScore;
+        localStorage.setItem('2048-bestScore', bestScore);
+    }
+    $('#bestScore').text(bestScore);
+
+    // Update highest tile
+    $('#highestTile').text(getHighestTile());
+
+    // Update PPM (Points Per Move)
+    let ppm = moveCount > 0 ? Math.round(currentScore / moveCount) : 0;
+    $('#ppm').text(ppm);
+}
 
 /**
  * updateMoveCount - Update the move counter display
