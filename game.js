@@ -358,8 +358,11 @@ function executeAnimations(animationInstructions, direction, callback) {
 
         let rowDiff = toRow - fromRow;
         let colDiff = toCol - fromCol;
-        let translateY = rowDiff * 125;
-        let translateX = colDiff * 125;
+        
+        // Calculate tile size dynamically based on actual tile width
+        let tileSize = cellDiv.outerWidth() + parseFloat($('.grid').css('grid-gap'));
+        let translateY = rowDiff * tileSize;
+        let translateX = colDiff * tileSize;
 
         cellDiv.css('z-index', '10');
         cellDiv.css('transition', `transform ${animationDuration}ms ease-in-out`);
@@ -432,8 +435,11 @@ function animateTileMovements(beforeBoard, afterBoard, direction, callback) {
                     // Calculate movement distance
                     let rowDiff = newPos.row - row;
                     let colDiff = newPos.col - col;
-                    let translateY = rowDiff * 125;
-                    let translateX = colDiff * 125;
+                    
+                    // Calculate tile size dynamically based on actual tile width
+                    let tileSize = cellDiv.outerWidth() + parseFloat($('.grid').css('grid-gap'));
+                    let translateY = rowDiff * tileSize;
+                    let translateX = colDiff * tileSize;
 
                     // Raise z-index for animating tile so it appears on top
                     cellDiv.css('z-index', '10');
@@ -1393,9 +1399,6 @@ function updateAllStats() {
     // Update highest tile
     $('#highestTile').text(getHighestTile());
 
-    // Update PPM (Points Per Move)
-    let ppm = moveCount > 0 ? Math.round(currentScore / moveCount) : 0;
-    $('#ppm').text(ppm);
 }
 
 /**

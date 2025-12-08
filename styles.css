@@ -211,3 +211,94 @@ h1 {
 .play-again-btn:hover {
     background-color: #666;
 }
+
+/* Mobile Responsive Styles */
+@media screen and (max-width: 768px) {
+    html, body {
+        font-size: 16px;
+        background: #1a1a2e;
+        background-image: url('https://narrowroadsoftware.com/images/narrow_road_background.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        margin: 0;
+        padding: 0;
+    }
+
+    body::before {
+        content: '';
+        display: block;
+        width: 100vw;
+        height: 220px;
+        background-color: #3e2f1c;
+        background-image: url('https://narrowroadsoftware.com/images/nrs_logo.png');
+        background-size: auto 200px;
+        background-repeat: no-repeat;
+        background-position: center;
+        margin: 0;
+        margin-bottom: 20px;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+    }
+
+    h1 {
+        display: none;
+    }
+
+    .replay-controls {
+        display: none;
+    }
+
+    .stats-container {
+        margin-left: 20px;
+        margin-right: 20px;
+        gap: 5px;
+        justify-content: center;
+        flex-wrap: nowrap;
+    }
+
+    .scoreboard {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 5px;
+    }
+
+    .score-label {
+        font-size: 12px;
+    }
+
+    .score-value {
+        font-size: 20px;
+    }
+
+    .container {
+        margin: 20px auto;
+        margin-left: 20px;
+        margin-right: 20px;
+        max-width: calc(100vw - 40px);
+        border: 10px solid #aaa;
+    }
+
+    .grid {
+        grid-template-columns: repeat(4, calc((100vw - 95px) / 4));
+        grid-template-rows: repeat(4, calc((100vw - 95px) / 4));
+        grid-gap: 10px;
+    }
+
+    .a, .b, .c, .d, .e, .f, .g, .h, .i, .j, .k, .l, .m, .n, .o, .p {
+        width: calc((100vw - 95px) / 4);
+        height: calc((100vw - 95px) / 4);
+        font-size: 2rem;
+    }
+
+    .game-over-content h1 {
+        font-size: 32px;
+    }
+
+    .game-over-content p {
+        font-size: 18px;
+    }
+}
